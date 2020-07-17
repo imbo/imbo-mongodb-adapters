@@ -7,7 +7,7 @@ jobs:
     services:
       mongodb:
         image: mongo:4.2.8
-        environment:
+        env:
           MONGO_INITDB_ROOT_USERNAME: admin
           MONGO_INITDB_ROOT_PASSWORD: password
         ports:
