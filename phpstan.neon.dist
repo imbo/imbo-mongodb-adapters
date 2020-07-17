@@ -1,0 +1,8 @@
+parameters:
+    level: max
+    paths:
+        - src
+        - tests
+    ignoreErrors:
+        - message: '#has no value type specified in iterable type MongoDB\\Model\\BSONDocument#'
+          path: src/*
