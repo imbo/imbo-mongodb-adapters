@@ -31,6 +31,12 @@ class GridFSIntegrationTest extends TestCase {
 
     /**
      * @covers ::getStatus
+     * @covers ::imageExists
+     * @covers ::store
+     * @covers ::getLastModified
+     * @covers ::imageExists
+     * @covers ::getImage
+     * @covers ::delete
      */
     public function testCanIntegrateWithMongoDB() : void {
         $this->assertTrue(
