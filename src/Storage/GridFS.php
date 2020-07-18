@@ -12,7 +12,7 @@ use DateTimeZone;
 use MongoDB\GridFS\Exception\FileNotFoundException;
 
 /**
- * GridFS (MongoDB) storage driver for images
+ * GridFS (MongoDB) storage adapter for images
  */
 class GridFS implements StorageInterface {
     private string $databaseName;

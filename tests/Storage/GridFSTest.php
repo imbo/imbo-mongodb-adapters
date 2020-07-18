@@ -259,7 +259,7 @@ class GridFSTest extends TestCase {
      * @dataProvider getGetImageExceptions
      * @covers ::getImage
      */
-    public function testGetImageThrowsExceptionWhenImageDoesNotExist(MongoDBException $mongoDbException, StorageException $storageException) : void {
+    public function testGetImageThrowsExceptionWhenErrorOccurs(MongoDBException $mongoDbException, StorageException $storageException) : void {
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
