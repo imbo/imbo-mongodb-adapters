@@ -594,12 +594,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/imbo/imbo.git",
-                "reference": "845fa98d09e785d0cc8c11837227d7df75370539"
+                "reference": "016e2dc6e72e4893d8ce9ace8bd025d160905ba9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imbo/imbo/zipball/845fa98d09e785d0cc8c11837227d7df75370539",
-                "reference": "845fa98d09e785d0cc8c11837227d7df75370539",
+                "url": "https://api.github.com/repos/imbo/imbo/zipball/016e2dc6e72e4893d8ce9ace8bd025d160905ba9",
+                "reference": "016e2dc6e72e4893d8ce9ace8bd025d160905ba9",
                 "shasum": ""
             },
             "require": {
@@ -659,7 +659,7 @@
                 "image storage",
                 "image transformation"
             ],
-            "time": "2020-07-16T13:04:05+00:00"
+            "time": "2020-07-19T08:35:54+00:00"
         },
         {
             "name": "myclabs/deep-copy",
