@@ -4,5 +4,7 @@ parameters:
         - src
         - tests
     ignoreErrors:
-        - message: '#has no value type specified in iterable type MongoDB\\Model\\BSONDocument#'
+        - message: '#has no value type specified in iterable type MongoDB\\#'
+          path: src/*
+        - message: '#generic class ArrayObject#'
           path: src/*

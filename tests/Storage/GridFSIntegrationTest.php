@@ -24,7 +24,8 @@ class GridFSIntegrationTest extends TestCase {
         ]);
 
         $uri = (string) getenv('MONGODB_URI');
-        (new Client($uri, $uriOptions))->dropDatabase($this->databaseName);
+        $client = new Client($uri, $uriOptions);
+        $client->dropDatabase($this->databaseName);
 
         $this->adapter = new GridFS($this->databaseName, $uri, $uriOptions);
     }
