@@ -580,12 +580,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/imbo/imbo.git",
-                "reference": "74cd07fbd0f4e3077fd0c3669e6f2028e233d369"
+                "reference": "99b1c3df50a32f4c8fcd8e8d80b701fa9d805d9d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imbo/imbo/zipball/74cd07fbd0f4e3077fd0c3669e6f2028e233d369",
-                "reference": "74cd07fbd0f4e3077fd0c3669e6f2028e233d369",
+                "url": "https://api.github.com/repos/imbo/imbo/zipball/99b1c3df50a32f4c8fcd8e8d80b701fa9d805d9d",
+                "reference": "99b1c3df50a32f4c8fcd8e8d80b701fa9d805d9d",
                 "shasum": ""
             },
             "require": {
@@ -645,7 +645,7 @@
                 "image storage",
                 "image transformation"
             ],
-            "time": "2020-08-09T20:08:51+00:00"
+            "time": "2020-08-10T14:03:51+00:00"
         },
         {
             "name": "imbo/imbo-adapters-sdk",
