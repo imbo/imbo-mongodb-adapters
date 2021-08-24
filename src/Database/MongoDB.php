@@ -140,7 +140,8 @@ class MongoDB implements DatabaseInterface {
     }
 
     public function deleteImage(string $user, string $imageIdentifier) : bool {
-        $data = $this->getImageData($user, $imageIdentifier);
+        // Get image to potentially trigger an exception if the image does not exist
+        $this->getImageData($user, $imageIdentifier);
 
         try {
             $this->imageCollection->deleteOne([
@@ -190,7 +191,8 @@ class MongoDB implements DatabaseInterface {
     }
 
     public function deleteMetadata(string $user, string $imageIdentifier) : bool {
-        $data = $this->getImageData($user, $imageIdentifier);
+        // Get image to potentially trigger an exception if the image does not exist
+        $this->getImageData($user, $imageIdentifier);
 
         try {
             $this->imageCollection->updateOne(
@@ -412,7 +414,7 @@ class MongoDB implements DatabaseInterface {
         }
 
         try {
-            $result = (int) $this->imageCollection->countDocuments($query);
+            $result = $this->imageCollection->countDocuments($query);
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to fetch information from the database', 500, $e);
         }
@@ -443,19 +445,21 @@ class MongoDB implements DatabaseInterface {
         try {
             /** @var Cursor */
             $result = $this->imageCollection->aggregate($pipeline);
+
+            /** @var BSONDocument[] */
             $docs = $result->toArray();
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to fetch information from the database', 500, $e);
         }
 
-        return (int) array_sum(array_map(function(BSONDocument $doc) : int {
+        return array_sum(array_map(function(BSONDocument $doc) : int {
             return (int) $doc['numBytes'];
         }, $docs));
     }
 
     public function getNumUsers() : int {
         try {
-            $result = (int) count($this->imageCollection->distinct('user'));
+            $result = count($this->imageCollection->distinct('user'));
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to fetch information from the database', 500, $e);
         }
