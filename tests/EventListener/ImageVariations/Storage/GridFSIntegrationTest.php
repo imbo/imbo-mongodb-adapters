@@ -2,22 +2,22 @@
 namespace Imbo\EventListener\ImageVariations\Storage;
 
 use MongoDB\Client;
-use DateTime;
-use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @coversDefaultClass Imbo\EventListener\ImageVariations\Storage\GridFS
  * @group integration
  */
-class GridFSIntegrationTest extends TestCase {
+class GridFSIntegrationTest extends TestCase
+{
     private GridFS $adapter;
     private string $user         = 'user';
     private string $imageId      = 'image-id';
     private string $databaseName = 'imbo-mongodb-adapters-integration-test';
     private string $fixturesDir  = __DIR__ . '/../../../fixtures';
 
-    public function setUp() : void {
+    public function setUp(): void
+    {
         $uriOptions = array_filter([
             'username' => (string) getenv('MONGODB_USERNAME'),
             'password' => (string) getenv('MONGODB_PASSWORD'),
@@ -34,7 +34,8 @@ class GridFSIntegrationTest extends TestCase {
      * @covers ::getImageVariation
      * @covers ::deleteImageVariations
      */
-    public function testCanIntegrateWithMongoDB() : void {
+    public function testCanIntegrateWithMongoDB(): void
+    {
         foreach ([100, 200, 300] as $width) {
             $this->assertTrue(
                 $this->adapter->storeImageVariation($this->user, $this->imageId, (string) file_get_contents($this->fixturesDir . '/test-image.png'), $width),

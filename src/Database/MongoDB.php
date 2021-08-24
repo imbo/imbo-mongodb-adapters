@@ -2,25 +2,26 @@
 namespace Imbo\Database;
 
 use ArrayObject;
-use Imbo\Model\Image;
-use Imbo\Model\Images;
-use Imbo\Resource\Images\Query;
+use DateTime;
 use Imbo\Exception\DatabaseException;
 use Imbo\Exception\DuplicateImageIdentifierException;
 use Imbo\Helpers\BSONToArray;
+use Imbo\Model\Image;
+use Imbo\Model\Images;
+use Imbo\Resource\Images\Query;
 use MongoDB\Client;
+use MongoDB\Collection;
 use MongoDB\Driver\Command;
 use MongoDB\Driver\Cursor;
-use MongoDB\Collection;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
 use MongoDB\Driver\Exception\WriteException;
 use MongoDB\Model\BSONDocument;
-use DateTime;
 
 /**
  * MongoDB database driver for Imbo
  */
-class MongoDB implements DatabaseInterface {
+class MongoDB implements DatabaseInterface
+{
     private Client $client;
     private string $databaseName;
     private Collection $imageCollection;
@@ -80,7 +81,8 @@ class MongoDB implements DatabaseInterface {
         $this->bsonToArray = $bsonToArray ?: new BSONToArray();
     }
 
-    public function insertImage(string $user, string $imageIdentifier, Image $image, bool $updateIfDuplicate = true) : bool {
+    public function insertImage(string $user, string $imageIdentifier, Image $image, bool $updateIfDuplicate = true): bool
+    {
         $now = time();
 
         if ($updateIfDuplicate && $this->imageExists($user, $imageIdentifier)) {
@@ -113,7 +115,7 @@ class MongoDB implements DatabaseInterface {
             'extension'        => $image->getExtension(),
             'mime'             => $image->getMimeType(),
             'metadata'         => [],
-            'added'            => $added   ? $added->getTimestamp()   : $now,
+            'added'            => $added ? $added->getTimestamp() : $now,
             'updated'          => $updated ? $updated->getTimestamp() : $now,
             'width'            => $image->getWidth(),
             'height'           => $image->getHeight(),
@@ -139,7 +141,8 @@ class MongoDB implements DatabaseInterface {
         return true;
     }
 
-    public function deleteImage(string $user, string $imageIdentifier) : bool {
+    public function deleteImage(string $user, string $imageIdentifier): bool
+    {
         // Get image to potentially trigger an exception if the image does not exist
         $this->getImageData($user, $imageIdentifier);
 
@@ -155,7 +158,8 @@ class MongoDB implements DatabaseInterface {
         return true;
     }
 
-    public function updateMetadata(string $user, string $imageIdentifier, array $metadata) : bool {
+    public function updateMetadata(string $user, string $imageIdentifier, array $metadata): bool
+    {
         try {
             $this->imageCollection->updateOne(
                 [
@@ -178,7 +182,8 @@ class MongoDB implements DatabaseInterface {
         return true;
     }
 
-    public function getMetadata(string $user, string $imageIdentifier) : array {
+    public function getMetadata(string $user, string $imageIdentifier): array
+    {
         /** @var ?ArrayObject */
         $metadata = $this->getImageData($user, $imageIdentifier)['metadata'] ?? null;
 
@@ -190,7 +195,8 @@ class MongoDB implements DatabaseInterface {
         return $this->bsonToArray->toArray($metadata->getArrayCopy());
     }
 
-    public function deleteMetadata(string $user, string $imageIdentifier) : bool {
+    public function deleteMetadata(string $user, string $imageIdentifier): bool
+    {
         // Get image to potentially trigger an exception if the image does not exist
         $this->getImageData($user, $imageIdentifier);
 
@@ -213,7 +219,8 @@ class MongoDB implements DatabaseInterface {
         return true;
     }
 
-    public function getImages(array $users, Query $query, Images $model) : array {
+    public function getImages(array $users, Query $query, Images $model): array
+    {
         $images    = [];
         $queryData = [];
 
@@ -315,7 +322,8 @@ class MongoDB implements DatabaseInterface {
         return $images;
     }
 
-    public function getImageProperties(string $user, string $imageIdentifier) : array {
+    public function getImageProperties(string $user, string $imageIdentifier): array
+    {
         $data = $this->getImageData($user, $imageIdentifier, [
             'size',
             'width',
@@ -332,7 +340,8 @@ class MongoDB implements DatabaseInterface {
         return $data->getArrayCopy();
     }
 
-    public function load(string $user, string $imageIdentifier, Image $image) : bool {
+    public function load(string $user, string $imageIdentifier, Image $image): bool
+    {
         $data = $this->getImageData($user, $imageIdentifier);
 
         $image
@@ -347,7 +356,8 @@ class MongoDB implements DatabaseInterface {
         return true;
     }
 
-    public function getLastModified(array $users, string $imageIdentifier = null) : DateTime {
+    public function getLastModified(array $users, string $imageIdentifier = null): DateTime
+    {
         $query = [];
 
         if (!empty($users)) {
@@ -374,18 +384,20 @@ class MongoDB implements DatabaseInterface {
 
         if (null === $data && null !== $imageIdentifier) {
             throw new DatabaseException('Image not found', 404);
-        } else if (null === $data) {
+        } elseif (null === $data) {
             $data = ['updated' => time()];
         }
 
         return new DateTime('@' . (int) $data['updated']);
     }
 
-    public function setLastModifiedNow(string $user, string $imageIdentifier) : DateTime {
+    public function setLastModifiedNow(string $user, string $imageIdentifier): DateTime
+    {
         return $this->setLastModifiedTime($user, $imageIdentifier, new DateTime('@' . time()));
     }
 
-    public function setLastModifiedTime(string $user, string $imageIdentifier, DateTime $time) : DateTime {
+    public function setLastModifiedTime(string $user, string $imageIdentifier, DateTime $time): DateTime
+    {
         if (!$this->imageExists($user, $imageIdentifier)) {
             throw new DatabaseException('Image not found', 404);
         }
@@ -406,7 +418,8 @@ class MongoDB implements DatabaseInterface {
         return $time;
     }
 
-    public function getNumImages(string $user = null) : int {
+    public function getNumImages(string $user = null): int
+    {
         $query = [];
 
         if (null !== $user) {
@@ -422,7 +435,8 @@ class MongoDB implements DatabaseInterface {
         return $result;
     }
 
-    public function getNumBytes(string $user = null) : int {
+    public function getNumBytes(string $user = null): int
+    {
         $pipeline = [];
 
         if (null !== $user) {
@@ -452,12 +466,13 @@ class MongoDB implements DatabaseInterface {
             throw new DatabaseException('Unable to fetch information from the database', 500, $e);
         }
 
-        return array_sum(array_map(function(BSONDocument $doc) : int {
+        return array_sum(array_map(function (BSONDocument $doc): int {
             return (int) $doc['numBytes'];
         }, $docs));
     }
 
-    public function getNumUsers() : int {
+    public function getNumUsers(): int
+    {
         try {
             $result = count($this->imageCollection->distinct('user'));
         } catch (MongoDBException $e) {
@@ -467,12 +482,13 @@ class MongoDB implements DatabaseInterface {
         return $result;
     }
 
-    public function getStatus() : bool {
+    public function getStatus(): bool
+    {
         try {
             $result = $this->client
                 ->getManager()
                 ->executeCommand($this->databaseName, new Command(['serverStatus' => 1]));
-        // @codeCoverageIgnoreStart
+            // @codeCoverageIgnoreStart
         } catch (MongoDBException $e) {
             return false;
         }
@@ -481,11 +497,13 @@ class MongoDB implements DatabaseInterface {
         return (bool) $result->getServer()->getInfo()['ok'];
     }
 
-    public function getImageMimeType(string $user, string $imageIdentifier) : string {
+    public function getImageMimeType(string $user, string $imageIdentifier): string
+    {
         return (string) $this->getImageData($user, $imageIdentifier)['mime'];
     }
 
-    public function imageExists(string $user, string $imageIdentifier) : bool {
+    public function imageExists(string $user, string $imageIdentifier): bool
+    {
         try {
             $this->getImageData($user, $imageIdentifier);
         } catch (DatabaseException $e) {
@@ -499,7 +517,8 @@ class MongoDB implements DatabaseInterface {
         return true;
     }
 
-    public function insertShortUrl(string $shortUrlId, string $user, string $imageIdentifier, string $extension = null, array $query = []) : bool {
+    public function insertShortUrl(string $shortUrlId, string $user, string $imageIdentifier, string $extension = null, array $query = []): bool
+    {
         $data = [
             'shortUrlId'      => $shortUrlId,
             'user'            => $user,
@@ -517,7 +536,8 @@ class MongoDB implements DatabaseInterface {
         return true;
     }
 
-    public function getShortUrlId(string $user, string $imageIdentifier, string $extension = null, array $query = []) : ?string {
+    public function getShortUrlId(string $user, string $imageIdentifier, string $extension = null, array $query = []): ?string
+    {
         try {
             /** @var ?BSONDocument */
             $result = $this->shortUrlCollection->findOne([
@@ -540,13 +560,14 @@ class MongoDB implements DatabaseInterface {
         return $result['shortUrlId'] ?? null;
     }
 
-    public function getShortUrlParams(string $shortUrlId) : ?array {
+    public function getShortUrlParams(string $shortUrlId): ?array
+    {
         try {
             /** @var ?BSONDocument */
             $result = $this->shortUrlCollection->findOne([
                 'shortUrlId' => $shortUrlId,
             ], [
-                '_id' => false
+                '_id' => false,
             ]);
         } catch (MongoDBException $e) {
             return null;
@@ -574,7 +595,8 @@ class MongoDB implements DatabaseInterface {
         return $result->getArrayCopy();
     }
 
-    public function deleteShortUrls(string $user, string $imageIdentifier, string $shortUrlId = null) : bool {
+    public function deleteShortUrls(string $user, string $imageIdentifier, string $shortUrlId = null): bool
+    {
         $query = [
             'user'            => $user,
             'imageIdentifier' => $imageIdentifier,
@@ -593,7 +615,8 @@ class MongoDB implements DatabaseInterface {
         return true;
     }
 
-    public function getAllUsers() : array {
+    public function getAllUsers(): array
+    {
         /** @var string[] */
         return $this->imageCollection->distinct('user');
     }
@@ -608,7 +631,8 @@ class MongoDB implements DatabaseInterface {
      * @throws DatabaseException
      * @return BSONDocument
      */
-    private function getImageData(string $user, string $imageIdentifier, array $includeKeys = [], array $excludeKeys = []) : BSONDocument {
+    private function getImageData(string $user, string $imageIdentifier, array $includeKeys = [], array $excludeKeys = []): BSONDocument
+    {
         try {
             $image = $this->imageCollection->findOne(
                 [

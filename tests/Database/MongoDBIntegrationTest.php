@@ -7,10 +7,12 @@ use MongoDB\Client;
  * @coversDefaultClass Imbo\Database\MongoDB
  * @group integration
  */
-class MongoDBIntegrationTest extends DatabaseTests {
+class MongoDBIntegrationTest extends DatabaseTests
+{
     private string $databaseName = 'imbo-mongodb-adapters-integration-test';
 
-    protected function getAdapter() : DatabaseInterface {
+    protected function getAdapter(): DatabaseInterface
+    {
         return new MongoDB(
             $this->databaseName,
             (string) getenv('MONGODB_URI'),
@@ -21,7 +23,8 @@ class MongoDBIntegrationTest extends DatabaseTests {
         );
     }
 
-    public function setUp() : void {
+    public function setUp(): void
+    {
         parent::setUp();
 
         $uriOptions = array_filter([

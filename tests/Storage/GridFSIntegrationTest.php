@@ -2,18 +2,17 @@
 namespace Imbo\Storage;
 
 use MongoDB\Client;
-use DateTime;
-use DateTimeZone;
-use PHPUnit\Framework\TestCase;
 
 /**
  * @coversDefaultClass Imbo\Storage\GridFS
  * @group integration
  */
-class GridFSIntegrationTest extends StorageTests {
+class GridFSIntegrationTest extends StorageTests
+{
     private string $databaseName = 'imbo-mongodb-adapters-integration-test';
 
-    protected function getAdapter() : GridFS {
+    protected function getAdapter(): GridFS
+    {
         $uriOptions = array_filter([
             'username' => (string) getenv('MONGODB_USERNAME'),
             'password' => (string) getenv('MONGODB_PASSWORD'),
@@ -24,7 +23,8 @@ class GridFSIntegrationTest extends StorageTests {
         return new GridFS($this->databaseName, $uri, $uriOptions);
     }
 
-    public function setUp() : void {
+    public function setUp(): void
+    {
         parent::setUp();
 
         $uriOptions = array_filter([

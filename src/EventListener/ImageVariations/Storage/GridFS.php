@@ -3,14 +3,15 @@ namespace Imbo\EventListener\ImageVariations\Storage;
 
 use Imbo\Exception\StorageException;
 use MongoDB\Client;
-use MongoDB\GridFS\Bucket;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
+use MongoDB\GridFS\Bucket;
 use MongoDB\GridFS\Exception\FileNotFoundException;
 
 /**
  * GridFS (MongoDB) storage adapter for image variations
  */
-class GridFS implements StorageInterface {
+class GridFS implements StorageInterface
+{
     private string $databaseName;
     private Client $client;
     private Bucket $bucket;
@@ -54,7 +55,8 @@ class GridFS implements StorageInterface {
             ->selectGridFSBucket($bucketOptions);
     }
 
-    public function storeImageVariation(string $user, string $imageIdentifier, string $blob, int $width) : bool {
+    public function storeImageVariation(string $user, string $imageIdentifier, string $blob, int $width): bool
+    {
         $this->bucket->uploadFromStream(
             $this->getImageFilename($user, $imageIdentifier, $width),
             $this->createStream($blob),
@@ -71,7 +73,8 @@ class GridFS implements StorageInterface {
         return true;
     }
 
-    public function getImageVariation(string $user, string $imageIdentifier, int $width) : ?string {
+    public function getImageVariation(string $user, string $imageIdentifier, int $width): ?string
+    {
         try {
             return stream_get_contents($this->bucket->openDownloadStreamByName(
                 $this->getImageFilename($user, $imageIdentifier, $width)
@@ -83,10 +86,11 @@ class GridFS implements StorageInterface {
         }
     }
 
-    public function deleteImageVariations(string $user, string $imageIdentifier, int $width = null) : bool {
+    public function deleteImageVariations(string $user, string $imageIdentifier, int $width = null): bool
+    {
         $filter = [
             'metadata.user'            => $user,
-            'metadata.imageIdentifier' => $imageIdentifier
+            'metadata.imageIdentifier' => $imageIdentifier,
         ];
 
         if (null !== $width) {
@@ -114,7 +118,8 @@ class GridFS implements StorageInterface {
      * @throws StorageException
      * @return resource
      */
-    private function createStream(string $data) {
+    private function createStream(string $data)
+    {
         $stream = fopen('php://temp', 'w+b');
 
         if (false === $stream) {
@@ -137,7 +142,8 @@ class GridFS implements StorageInterface {
      * @param int $width
      * @return string
      */
-    private function getImageFilename(string $user, string $imageIdentifier, int $width) : string {
+    private function getImageFilename(string $user, string $imageIdentifier, int $width): string
+    {
         return $user . '.' . $imageIdentifier . '.' . $width;
     }
 }

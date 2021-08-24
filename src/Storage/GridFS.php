@@ -1,20 +1,21 @@
 <?php declare(strict_types=1);
 namespace Imbo\Storage;
 
-use Imbo\Exception\StorageException;
-use MongoDB\Client;
-use MongoDB\GridFS\Bucket;
-use MongoDB\Driver\Exception\Exception as MongoDBException;
-use MongoDB\Driver\Command;
-use MongoDB\Model\BSONDocument;
 use DateTime;
 use DateTimeZone;
+use Imbo\Exception\StorageException;
+use MongoDB\Client;
+use MongoDB\Driver\Command;
+use MongoDB\Driver\Exception\Exception as MongoDBException;
+use MongoDB\GridFS\Bucket;
 use MongoDB\GridFS\Exception\FileNotFoundException;
+use MongoDB\Model\BSONDocument;
 
 /**
  * GridFS (MongoDB) storage adapter for images
  */
-class GridFS implements StorageInterface {
+class GridFS implements StorageInterface
+{
     private string $databaseName;
     private Client $client;
     private Bucket $bucket;
@@ -58,16 +59,17 @@ class GridFS implements StorageInterface {
             ->selectGridFSBucket($bucketOptions);
     }
 
-    public function store(string $user, string $imageIdentifier, string $imageData) : bool {
+    public function store(string $user, string $imageIdentifier, string $imageData): bool
+    {
         if ($this->imageExists($user, $imageIdentifier)) {
             $collectionName = $this->bucket->getBucketName() . '.files';
             $collection     = $this->client->selectDatabase($this->databaseName)->selectCollection($collectionName);
             $collection->updateOne([
                 'metadata.user'            => $user,
-                'metadata.imageIdentifier' => $imageIdentifier
+                'metadata.imageIdentifier' => $imageIdentifier,
             ], [
                 '$set' => [
-                    'metadata.updated' => time()
+                    'metadata.updated' => time(),
                 ],
             ]);
 
@@ -89,7 +91,8 @@ class GridFS implements StorageInterface {
         return true;
     }
 
-    public function delete(string $user, string $imageIdentifier) : bool {
+    public function delete(string $user, string $imageIdentifier): bool
+    {
         $file = $this->getImageObject($user, $imageIdentifier);
 
         if (null === $file) {
@@ -101,7 +104,8 @@ class GridFS implements StorageInterface {
         return true;
     }
 
-    public function getImage(string $user, string $imageIdentifier) : ?string {
+    public function getImage(string $user, string $imageIdentifier): ?string
+    {
         try {
             return stream_get_contents($this->bucket->openDownloadStreamByName(
                 $this->getImageFilename($user, $imageIdentifier)
@@ -113,7 +117,8 @@ class GridFS implements StorageInterface {
         }
     }
 
-    public function getLastModified(string $user, string $imageIdentifier) : DateTime {
+    public function getLastModified(string $user, string $imageIdentifier): DateTime
+    {
         /** @var ?array{metadata: array{updated: int}} */
         $file = $this->getImageObject($user, $imageIdentifier);
 
@@ -124,12 +129,13 @@ class GridFS implements StorageInterface {
         return new DateTime('@' . $file['metadata']['updated'], new DateTimeZone('UTC'));
     }
 
-    public function getStatus() : bool {
+    public function getStatus(): bool
+    {
         try {
             $result = $this->client
                 ->getManager()
                 ->executeCommand($this->databaseName, new Command(['serverStatus' => 1]));
-        // @codeCoverageIgnoreStart
+            // @codeCoverageIgnoreStart
         } catch (MongoDBException $e) {
             return false;
         }
@@ -138,10 +144,11 @@ class GridFS implements StorageInterface {
         return (bool) $result->getServer()->getInfo()['ok'];
     }
 
-    public function imageExists(string $user, string $imageIdentifier) : bool {
+    public function imageExists(string $user, string $imageIdentifier): bool
+    {
         return null !== $this->bucket->findOne([
             'metadata.user'            => $user,
-            'metadata.imageIdentifier' => $imageIdentifier
+            'metadata.imageIdentifier' => $imageIdentifier,
         ]);
     }
 
@@ -152,7 +159,8 @@ class GridFS implements StorageInterface {
      * @param string $imageIdentifier The image identifier
      * @return ?BSONDocument Returns null if the file does not exist or the file as an object otherwise
      */
-    protected function getImageObject(string $user, string $imageIdentifier) : ?BSONDocument {
+    protected function getImageObject(string $user, string $imageIdentifier): ?BSONDocument
+    {
         /** @var ?BSONDocument */
         return $this->bucket->findOne([
             'metadata.user'            => $user,
@@ -167,7 +175,8 @@ class GridFS implements StorageInterface {
      * @throws StorageException
      * @return resource
      */
-    private function createStream(string $data) {
+    private function createStream(string $data)
+    {
         $stream = fopen('php://temp', 'w+b');
 
         if (false === $stream) {
@@ -189,7 +198,8 @@ class GridFS implements StorageInterface {
      * @param string $imageIdentifier
      * @return string
      */
-    private function getImageFilename(string $user, string $imageIdentifier) : string {
+    private function getImageFilename(string $user, string $imageIdentifier): string
+    {
         return $user . '.' . $imageIdentifier;
     }
 }
