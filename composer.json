@@ -24,11 +24,8 @@
     "imbo/imbo": "dev-develop",
     "imbo/imbo-adapters-sdk": "dev-main",
     "phpunit/phpunit": "^9.3",
-    "phpstan/phpstan": "^0.12",
-    "phpstan/phpstan-phpunit": "^0.12",
-    "phpstan/extension-installer": "^1.0",
-    "vimeo/psalm": "^3.12",
-    "psalm/plugin-phpunit": "^0.10"
+    "psalm/plugin-phpunit": "^0.16.1",
+    "vimeo/psalm": "^4.9"
   },
   "autoload": {
     "psr-4": {
@@ -55,5 +52,8 @@
       "@sa",
       "@test"
     ]
+  },
+  "config": {
+    "sort-packages": true
   }
 }
