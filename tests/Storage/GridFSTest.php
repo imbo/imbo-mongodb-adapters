@@ -119,8 +119,8 @@ class GridFSTest extends TestCase
                 ],
                 $this->callback(
                     function (array $data): bool {
-                    return is_int($data['$set']['metadata.updated'] ?? null);
-                }
+                        return is_int($data['$set']['metadata.updated'] ?? null);
+                    }
                 )
             );
 
