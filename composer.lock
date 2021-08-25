@@ -387,16 +387,16 @@
         },
         {
             "name": "composer/package-versions-deprecated",
-            "version": "1.11.99.2",
+            "version": "1.11.99.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/package-versions-deprecated.git",
-                "reference": "c6522afe5540d5fc46675043d3ed5a45a740b27c"
+                "reference": "fff576ac850c045158a250e7e27666e146e78d18"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/package-versions-deprecated/zipball/c6522afe5540d5fc46675043d3ed5a45a740b27c",
-                "reference": "c6522afe5540d5fc46675043d3ed5a45a740b27c",
+                "url": "https://api.github.com/repos/composer/package-versions-deprecated/zipball/fff576ac850c045158a250e7e27666e146e78d18",
+                "reference": "fff576ac850c045158a250e7e27666e146e78d18",
                 "shasum": ""
             },
             "require": {
@@ -440,7 +440,7 @@
             "description": "Composer plugin that provides efficient querying for installed package versions (no runtime IO)",
             "support": {
                 "issues": "https://github.com/composer/package-versions-deprecated/issues",
-                "source": "https://github.com/composer/package-versions-deprecated/tree/1.11.99.2"
+                "source": "https://github.com/composer/package-versions-deprecated/tree/1.11.99.3"
             },
             "funding": [
                 {
@@ -456,7 +456,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-05-24T07:46:03+00:00"
+            "time": "2021-08-17T13:49:14+00:00"
         },
         {
             "name": "composer/semver",
@@ -891,12 +891,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/imbo/imbo.git",
-                "reference": "af6eb337c1bf72d78d3aac93d4d0c348d8053f6a"
+                "reference": "508c9bb81cebcff730803afe1f19f23926ae5430"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imbo/imbo/zipball/af6eb337c1bf72d78d3aac93d4d0c348d8053f6a",
-                "reference": "af6eb337c1bf72d78d3aac93d4d0c348d8053f6a",
+                "url": "https://api.github.com/repos/imbo/imbo/zipball/508c9bb81cebcff730803afe1f19f23926ae5430",
+                "reference": "508c9bb81cebcff730803afe1f19f23926ae5430",
                 "shasum": ""
             },
             "require": {
@@ -966,7 +966,7 @@
                 "issues": "https://github.com/imbo/imbo/issues",
                 "source": "https://github.com/imbo/imbo"
             },
-            "time": "2021-03-26T09:36:08+00:00"
+            "time": "2021-08-25T16:21:31+00:00"
         },
         {
             "name": "imbo/imbo-adapters-sdk",
@@ -974,12 +974,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/imbo/imbo-adapters-sdk.git",
-                "reference": "30368ec8b6f8bdd3bc68fb24b491090321217d55"
+                "reference": "1c3c98dc8b2a299a8c309f7d7166b20ba88a9a50"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imbo/imbo-adapters-sdk/zipball/30368ec8b6f8bdd3bc68fb24b491090321217d55",
-                "reference": "30368ec8b6f8bdd3bc68fb24b491090321217d55",
+                "url": "https://api.github.com/repos/imbo/imbo-adapters-sdk/zipball/1c3c98dc8b2a299a8c309f7d7166b20ba88a9a50",
+                "reference": "1c3c98dc8b2a299a8c309f7d7166b20ba88a9a50",
                 "shasum": ""
             },
             "require": {
@@ -988,7 +988,7 @@
             "require-dev": {
                 "imbo/imbo": "dev-develop",
                 "imbo/imbo-coding-standard": "^2.0",
-                "phpunit/phpunit": "^9.3",
+                "phpunit/phpunit": "^9.5",
                 "psalm/plugin-phpunit": "^0.16.1",
                 "vimeo/psalm": "^4.9"
             },
@@ -1023,7 +1023,7 @@
                 "issues": "https://github.com/imbo/imbo-adapters-sdk/issues",
                 "source": "https://github.com/imbo/imbo-adapters-sdk/tree/main"
             },
-            "time": "2021-08-24T18:08:24+00:00"
+            "time": "2021-08-25T18:16:46+00:00"
         },
         {
             "name": "imbo/imbo-coding-standard",

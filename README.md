@@ -12,6 +12,12 @@
 
 This package provides both storage and database adapters for Imbo, leveraging [GridFS](https://docs.mongodb.com/manual/core/gridfs/) and MongoDB.
 
+```php
+use Imbo\Storage\GridFS;
+
+$adapter = new GridFS();
+```
+
 ## Running integration tests
 
 If you want to run the integration tests you will need a running MongoDB service. The repo contains a simple configuration file for [Docker Compose](https://docs.docker.com/compose/) that you can use to quickly run a MongoDB instance.
