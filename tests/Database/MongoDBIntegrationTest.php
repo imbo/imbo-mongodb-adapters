@@ -9,7 +9,7 @@ use MongoDB\Client;
  */
 class MongoDBIntegrationTest extends DatabaseTests
 {
-    private string $databaseName = 'imbo-mongodb-adapters-integration-test';
+    private string $databaseName = 'imbo-database-mongodb-integration-test';
 
     protected function getAdapter(): DatabaseInterface
     {
@@ -19,7 +19,7 @@ class MongoDBIntegrationTest extends DatabaseTests
             array_filter([
                 'username' => (string) getenv('MONGODB_USERNAME'),
                 'password' => (string) getenv('MONGODB_PASSWORD'),
-            ])
+            ]),
         );
     }
 
