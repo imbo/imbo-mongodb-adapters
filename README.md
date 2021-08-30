@@ -16,6 +16,7 @@ This package provides both storage and database adapters for Imbo, leveraging [G
 $mainDatabaseAdapter = new Imbo\Database\MongoDB();
 $mainStorageAdapter = new Imbo\Storage\GridFS();
 $imageVariationsStorageAdapter = new Imbo\EventListener\ImageVariations\Storage\GridFS();
+$mutableAccessControlAdapter = new Imbo\Auth\AccessControl\Adapter\MongoDB();
 ```
 
 ## Running integration tests
