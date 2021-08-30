@@ -63,7 +63,7 @@ class GridFSTest extends TestCase
                         $this->user === ($data['metadata']['user'] ?? null) &&
                         $this->imageId === ($data['metadata']['imageIdentifier'] ?? null) &&
                         is_int($data['metadata']['updated'] ?? null);
-                })
+                }),
             );
 
         $database = $this->createMock(Database::class);
@@ -84,7 +84,7 @@ class GridFSTest extends TestCase
 
         $this->assertTrue(
             $adapter->store($this->user, $this->imageId, 'image data'),
-            'Expected adapter to store image'
+            'Expected adapter to store image',
         );
     }
 
@@ -120,8 +120,8 @@ class GridFSTest extends TestCase
                 $this->callback(
                     function (array $data): bool {
                         return is_int($data['$set']['metadata.updated'] ?? null);
-                    }
-                )
+                    },
+                ),
             );
 
         $database = $this->createMock(Database::class);
@@ -147,7 +147,7 @@ class GridFSTest extends TestCase
 
         $this->assertTrue(
             $adapter->store($this->user, $this->imageId, 'image data'),
-            'Expected adapter to store image'
+            'Expected adapter to store image',
         );
     }
 
@@ -182,7 +182,7 @@ class GridFSTest extends TestCase
 
         $this->assertTrue(
             $adapter->delete($this->user, $this->imageId),
-            'Expected adapter to delete image'
+            'Expected adapter to delete image',
         );
     }
 

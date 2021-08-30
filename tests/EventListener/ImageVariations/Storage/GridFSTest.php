@@ -51,7 +51,7 @@ class GridFSTest extends TestCase
                         $this->user === ($data['metadata']['user'] ?? null) &&
                         $this->imageId === ($data['metadata']['imageIdentifier'] ?? null) &&
                         100 === ($data['metadata']['width'] ?? null);
-                })
+                }),
             );
 
         $database = $this->createMock(Database::class);
@@ -72,7 +72,7 @@ class GridFSTest extends TestCase
 
         $this->assertTrue(
             $adapter->storeImageVariation($this->user, $this->imageId, 'image data', 100),
-            'Expected adapter to store image variation'
+            'Expected adapter to store image variation',
         );
     }
 
@@ -184,7 +184,7 @@ class GridFSTest extends TestCase
 
         $this->assertTrue(
             $adapter->deleteImageVariations($this->user, $this->imageId),
-            'Expected adapter to delete image variations'
+            'Expected adapter to delete image variations',
         );
     }
 
@@ -219,7 +219,7 @@ class GridFSTest extends TestCase
 
         $this->assertTrue(
             $adapter->deleteImageVariations($this->user, $this->imageId, 100),
-            'Expected adapter to delete specific image variation'
+            'Expected adapter to delete specific image variation',
         );
     }
 

@@ -129,7 +129,7 @@ class MongoDB implements DatabaseInterface
             if (11000 === $e->getCode()) {
                 throw new DuplicateImageIdentifierException(
                     'Duplicate image identifier when attempting to insert image into DB.',
-                    503
+                    503,
                 );
             }
 

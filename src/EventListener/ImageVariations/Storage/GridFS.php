@@ -67,7 +67,7 @@ class GridFS implements StorageInterface
                     'imageIdentifier' => $imageIdentifier,
                     'width'           => $width,
                 ],
-            ]
+            ],
         );
 
         return true;
@@ -77,7 +77,7 @@ class GridFS implements StorageInterface
     {
         try {
             return stream_get_contents($this->bucket->openDownloadStreamByName(
-                $this->getImageFilename($user, $imageIdentifier, $width)
+                $this->getImageFilename($user, $imageIdentifier, $width),
             )) ?: null;
         } catch (FileNotFoundException $e) {
             throw new StorageException('File not found', 404, $e);
