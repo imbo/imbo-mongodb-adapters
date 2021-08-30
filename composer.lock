@@ -891,12 +891,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/imbo/imbo.git",
-                "reference": "e619a2dd0ba1f0388931ff5270549748b60ac6c7"
+                "reference": "354d54c5b5826aac7f7e4323aa940aad00f8636c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imbo/imbo/zipball/e619a2dd0ba1f0388931ff5270549748b60ac6c7",
-                "reference": "e619a2dd0ba1f0388931ff5270549748b60ac6c7",
+                "url": "https://api.github.com/repos/imbo/imbo/zipball/354d54c5b5826aac7f7e4323aa940aad00f8636c",
+                "reference": "354d54c5b5826aac7f7e4323aa940aad00f8636c",
                 "shasum": ""
             },
             "require": {
@@ -967,7 +967,7 @@
                 "issues": "https://github.com/imbo/imbo/issues",
                 "source": "https://github.com/imbo/imbo"
             },
-            "time": "2021-08-26T20:40:39+00:00"
+            "time": "2021-08-26T22:30:27+00:00"
         },
         {
             "name": "imbo/imbo-adapters-sdk",
