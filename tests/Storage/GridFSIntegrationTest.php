@@ -23,7 +23,7 @@ class GridFSIntegrationTest extends StorageTests
         return new GridFS($this->databaseName, $uri, $uriOptions);
     }
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         parent::setUp();
 

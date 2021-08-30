@@ -16,7 +16,7 @@ class GridFSIntegrationTest extends TestCase
     private string $databaseName = 'imbo-mongodb-adapters-integration-test';
     private string $fixturesDir  = __DIR__ . '/../../../fixtures';
 
-    public function setUp(): void
+    protected function setUp(): void
     {
         $uriOptions = array_filter([
             'username' => (string) getenv('MONGODB_USERNAME'),
