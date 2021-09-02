@@ -891,12 +891,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/imbo/imbo.git",
-                "reference": "acaf8e199edfa476c23de659e3921a3bf5230b65"
+                "reference": "6cd1f23349661706d9176a7af8a19397bf832dae"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imbo/imbo/zipball/acaf8e199edfa476c23de659e3921a3bf5230b65",
-                "reference": "acaf8e199edfa476c23de659e3921a3bf5230b65",
+                "url": "https://api.github.com/repos/imbo/imbo/zipball/6cd1f23349661706d9176a7af8a19397bf832dae",
+                "reference": "6cd1f23349661706d9176a7af8a19397bf832dae",
                 "shasum": ""
             },
             "require": {
@@ -910,23 +910,19 @@
             "require-dev": {
                 "christeredvartsen/testfs": "^0.3.0",
                 "doctrine/dbal": "^2.10",
-                "ext-mongodb": "^1.6",
                 "imbo/behat-api-extension": "^3.0",
                 "imbo/imbo-filesystem-adapters": "dev-main",
                 "imbo/imbo-mongodb-adapters": "dev-main",
                 "micheh/psr7-cache": "^0.5",
-                "mongodb/mongodb": "^1.6",
                 "phpunit/phpunit": "^9.2"
             },
             "suggest": {
                 "doctrine/dbal": "Enables usage of using RDMS for storing data (and optionally images). Recommended version: ^2.9",
-                "ext-mongodb": "Enables usage of MongoDB and GridFS as database and image storage. version: ^1.6",
                 "imbo/imbo-b2-adapters": "Enables usage of Backblaze B2 for storing images",
                 "imbo/imbo-filesystem-adapters": "Enables usage of a (local) filesystem for storing images",
                 "imbo/imbo-metadata-cache": "Enabled caching of metadata through an event listener. Recommended version ^1.0",
                 "imbo/imbo-mongodb-adapters": "Enables usage of MongoDB for storing images",
-                "imbo/imbo-s3-adapters": "Enables usage of AWS S3 for storing images",
-                "mongodb/mongodb": "Enables usage of MongoDB and GridFS as database and image storage. Recommended version: ^1.5"
+                "imbo/imbo-s3-adapters": "Enables usage of AWS S3 for storing images"
             },
             "default-branch": true,
             "bin": [
@@ -967,7 +963,7 @@
                 "issues": "https://github.com/imbo/imbo/issues",
                 "source": "https://github.com/imbo/imbo"
             },
-            "time": "2021-08-30T10:45:30+00:00"
+            "time": "2021-08-30T12:51:05+00:00"
         },
         {
             "name": "imbo/imbo-adapters-sdk",
@@ -975,12 +971,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/imbo/imbo-adapters-sdk.git",
-                "reference": "c5d4828301a7e467d976fac690d8cc0b4f7f4c40"
+                "reference": "5829bab6520e70e8affa948fe6de9281182f122b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imbo/imbo-adapters-sdk/zipball/c5d4828301a7e467d976fac690d8cc0b4f7f4c40",
-                "reference": "c5d4828301a7e467d976fac690d8cc0b4f7f4c40",
+                "url": "https://api.github.com/repos/imbo/imbo-adapters-sdk/zipball/5829bab6520e70e8affa948fe6de9281182f122b",
+                "reference": "5829bab6520e70e8affa948fe6de9281182f122b",
                 "shasum": ""
             },
             "require": {
@@ -1024,7 +1020,7 @@
                 "issues": "https://github.com/imbo/imbo-adapters-sdk/issues",
                 "source": "https://github.com/imbo/imbo-adapters-sdk/tree/main"
             },
-            "time": "2021-08-30T10:47:38+00:00"
+            "time": "2021-09-02T06:58:10+00:00"
         },
         {
             "name": "imbo/imbo-coding-standard",
@@ -2002,16 +1998,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "9.5.8",
+            "version": "9.5.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "191768ccd5c85513b4068bdbe99bb6390c7d54fb"
+                "reference": "ea8c2dfb1065eb35a79b3681eee6e6fb0a6f273b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/191768ccd5c85513b4068bdbe99bb6390c7d54fb",
-                "reference": "191768ccd5c85513b4068bdbe99bb6390c7d54fb",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/ea8c2dfb1065eb35a79b3681eee6e6fb0a6f273b",
+                "reference": "ea8c2dfb1065eb35a79b3681eee6e6fb0a6f273b",
                 "shasum": ""
             },
             "require": {
@@ -2089,7 +2085,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.5.8"
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/9.5.9"
             },
             "funding": [
                 {
@@ -2101,7 +2097,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2021-07-31T15:17:34+00:00"
+            "time": "2021-08-31T06:47:40+00:00"
         },
         {
             "name": "psalm/plugin-phpunit",
@@ -3427,16 +3423,16 @@
         },
         {
             "name": "symfony/console",
-            "version": "v5.3.6",
+            "version": "v5.3.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "51b71afd6d2dc8f5063199357b9880cea8d8bfe2"
+                "reference": "8b1008344647462ae6ec57559da166c2bfa5e16a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/51b71afd6d2dc8f5063199357b9880cea8d8bfe2",
-                "reference": "51b71afd6d2dc8f5063199357b9880cea8d8bfe2",
+                "url": "https://api.github.com/repos/symfony/console/zipball/8b1008344647462ae6ec57559da166c2bfa5e16a",
+                "reference": "8b1008344647462ae6ec57559da166c2bfa5e16a",
                 "shasum": ""
             },
             "require": {
@@ -3506,7 +3502,7 @@
                 "terminal"
             ],
             "support": {
-                "source": "https://github.com/symfony/console/tree/v5.3.6"
+                "source": "https://github.com/symfony/console/tree/v5.3.7"
             },
             "funding": [
                 {
@@ -3522,7 +3518,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-07-27T19:10:22+00:00"
+            "time": "2021-08-25T20:02:16+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -3593,16 +3589,16 @@
         },
         {
             "name": "symfony/http-foundation",
-            "version": "v4.4.29",
+            "version": "v4.4.30",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/http-foundation.git",
-                "reference": "7016057b01f0ed3ec3ba1f31a580b6661667c2e1"
+                "reference": "09b3202651ab23ac8dcf455284a48a3500e56731"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-foundation/zipball/7016057b01f0ed3ec3ba1f31a580b6661667c2e1",
-                "reference": "7016057b01f0ed3ec3ba1f31a580b6661667c2e1",
+                "url": "https://api.github.com/repos/symfony/http-foundation/zipball/09b3202651ab23ac8dcf455284a48a3500e56731",
+                "reference": "09b3202651ab23ac8dcf455284a48a3500e56731",
                 "shasum": ""
             },
             "require": {
@@ -3641,7 +3637,7 @@
             "description": "Defines an object-oriented layer for the HTTP specification",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/http-foundation/tree/v4.4.29"
+                "source": "https://github.com/symfony/http-foundation/tree/v4.4.30"
             },
             "funding": [
                 {
@@ -3657,20 +3653,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-07-27T14:32:23+00:00"
+            "time": "2021-08-26T15:51:23+00:00"
         },
         {
             "name": "symfony/mime",
-            "version": "v5.3.4",
+            "version": "v5.3.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/mime.git",
-                "reference": "633e4e8afe9e529e5599d71238849a4218dd497b"
+                "reference": "ae887cb3b044658676129f5e97aeb7e9eb69c2d8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/mime/zipball/633e4e8afe9e529e5599d71238849a4218dd497b",
-                "reference": "633e4e8afe9e529e5599d71238849a4218dd497b",
+                "url": "https://api.github.com/repos/symfony/mime/zipball/ae887cb3b044658676129f5e97aeb7e9eb69c2d8",
+                "reference": "ae887cb3b044658676129f5e97aeb7e9eb69c2d8",
                 "shasum": ""
             },
             "require": {
@@ -3724,7 +3720,7 @@
                 "mime-type"
             ],
             "support": {
-                "source": "https://github.com/symfony/mime/tree/v5.3.4"
+                "source": "https://github.com/symfony/mime/tree/v5.3.7"
             },
             "funding": [
                 {
@@ -3740,7 +3736,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-07-21T12:40:44+00:00"
+            "time": "2021-08-20T11:40:01+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -4389,16 +4385,16 @@
         },
         {
             "name": "symfony/string",
-            "version": "v5.3.3",
+            "version": "v5.3.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/string.git",
-                "reference": "bd53358e3eccec6a670b5f33ab680d8dbe1d4ae1"
+                "reference": "8d224396e28d30f81969f083a58763b8b9ceb0a5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/string/zipball/bd53358e3eccec6a670b5f33ab680d8dbe1d4ae1",
-                "reference": "bd53358e3eccec6a670b5f33ab680d8dbe1d4ae1",
+                "url": "https://api.github.com/repos/symfony/string/zipball/8d224396e28d30f81969f083a58763b8b9ceb0a5",
+                "reference": "8d224396e28d30f81969f083a58763b8b9ceb0a5",
                 "shasum": ""
             },
             "require": {
@@ -4452,7 +4448,7 @@
                 "utf8"
             ],
             "support": {
-                "source": "https://github.com/symfony/string/tree/v5.3.3"
+                "source": "https://github.com/symfony/string/tree/v5.3.7"
             },
             "funding": [
                 {
@@ -4468,7 +4464,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2021-06-27T11:44:38+00:00"
+            "time": "2021-08-26T08:00:08+00:00"
         },
         {
             "name": "theseer/tokenizer",
