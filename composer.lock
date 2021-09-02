@@ -971,12 +971,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/imbo/imbo-adapters-sdk.git",
-                "reference": "5829bab6520e70e8affa948fe6de9281182f122b"
+                "reference": "32d9617c31be0f066dde2038b1425d004c18d4df"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/imbo/imbo-adapters-sdk/zipball/5829bab6520e70e8affa948fe6de9281182f122b",
-                "reference": "5829bab6520e70e8affa948fe6de9281182f122b",
+                "url": "https://api.github.com/repos/imbo/imbo-adapters-sdk/zipball/32d9617c31be0f066dde2038b1425d004c18d4df",
+                "reference": "32d9617c31be0f066dde2038b1425d004c18d4df",
                 "shasum": ""
             },
             "require": {
@@ -1020,7 +1020,7 @@
                 "issues": "https://github.com/imbo/imbo-adapters-sdk/issues",
                 "source": "https://github.com/imbo/imbo-adapters-sdk/tree/main"
             },
-            "time": "2021-09-02T06:58:10+00:00"
+            "time": "2021-09-02T21:39:18+00:00"
         },
         {
             "name": "imbo/imbo-coding-standard",

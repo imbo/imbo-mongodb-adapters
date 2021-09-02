@@ -263,16 +263,6 @@ class MongoDB implements DatabaseInterface
             $queryData['originalChecksum']['$in'] = $originalChecksums;
         }
 
-        $sort = ['added' => -1];
-
-        if (!empty($query->getSort())) {
-            $sort = [];
-
-            foreach ($query->getSort() as $s) {
-                $sort[$s['field']] = ('asc' === $s['sort'] ? 1 : -1);
-            }
-        }
-
         $fields = array_fill_keys([
             'extension',
             'added',
@@ -287,6 +277,20 @@ class MongoDB implements DatabaseInterface
             'height',
         ], true);
 
+        $sort = ['added' => -1];
+
+        if (!empty($query->getSort())) {
+            $sort = [];
+
+            foreach ($query->getSort() as $s) {
+                if (!array_key_exists($s['field'], $fields)) {
+                    throw new DatabaseException(sprintf('Invalid sort field: %s', $s['field']), 400);
+                }
+
+                $sort[$s['field']] = ('asc' === $s['sort'] ? 1 : -1);
+            }
+        }
+
         if ($query->getReturnMetadata()) {
             $fields['metadata'] = true;
         }
@@ -299,6 +303,10 @@ class MongoDB implements DatabaseInterface
             ];
 
             if (($page = $query->getPage()) > 1) {
+                if (!$query->getLimit()) {
+                    throw new DatabaseException('page is not allowed without limit', 400);
+                }
+
                 $skip = $query->getLimit() * ($page - 1);
                 $options['skip'] = $skip;
             }
