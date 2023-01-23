@@ -5,7 +5,7 @@ use Imbo\Auth\AccessControl\GroupQuery;
 use Imbo\Exception\DatabaseException;
 use Imbo\Helpers\BSONToArray;
 use Imbo\Model\Groups as GroupsModel;
-use MongoDB\BSON\ObjectID as MongoId;
+use MongoDB\BSON\ObjectId as MongoId;
 use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Driver\Cursor;
