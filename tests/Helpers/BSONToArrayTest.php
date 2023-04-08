@@ -18,9 +18,19 @@ class BSONToArrayTest extends TestCase
     }
 
     /**
+     * @dataProvider getValues
+     * @covers ::toArray
+     * @covers ::isBSONModel
+     */
+    public function testCanConvertValuesToArray(mixed $document, mixed $expected): void
+    {
+        $this->assertSame($expected, $this->helper->toArray($document));
+    }
+
+    /**
      * @return array<string,array{document:mixed,expected:mixed}>
      */
-    public function getValues(): array
+    public static function getValues(): array
     {
         return [
             'string value' => [
@@ -86,17 +96,5 @@ class BSONToArrayTest extends TestCase
                 ],
             ],
         ];
-    }
-
-    /**
-     * @dataProvider getValues
-     * @covers ::toArray
-     * @covers ::isBSONModel
-     * @param mixed $document
-     * @param mixed $expected
-     */
-    public function testCanConvertValuesToArray($document, $expected): void
-    {
-        $this->assertSame($expected, $this->helper->toArray($document));
     }
 }

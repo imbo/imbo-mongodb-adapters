@@ -315,7 +315,7 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
 
         foreach ($keyPair['acl'] as $rule) {
             $rule['id'] = (string) $rule['id'];
-            /** @var array{id:string,users:array<string>,resources:array<string>} */
+            /** @var array{id:string,users:array<string>,resources:array<string>,group?:string} */
             $rules[] = $this->bsonToArray->toArray($rule);
         }
 

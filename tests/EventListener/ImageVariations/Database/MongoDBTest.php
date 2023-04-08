@@ -13,8 +13,7 @@ use PHPUnit\Framework\TestCase;
  */
 class MongoDBTest extends TestCase
 {
-    /** @var Collection&MockObject */
-    private Collection $collection;
+    private Collection&MockObject $collection;
     private MongoDB $adapter;
 
     protected function setUp(): void
@@ -37,9 +36,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToStoreImageVariationMetadata(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->collection
             ->method('insertOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to save image variation data', 500, $e));
         $this->adapter->storeImageVariationMetadata('user', 'image', 100, 200);

@@ -13,10 +13,8 @@ use PHPUnit\Framework\TestCase;
  */
 class MongoDBTest extends TestCase
 {
-    /** @var Collection&MockObject */
-    private Collection $aclCollection;
-    /** @var Collection&MockObject */
-    private Collection $aclGroupCollection;
+    private Collection&MockObject $aclCollection;
+    private Collection&MockObject $aclGroupCollection;
     private MongoDB $adapter;
 
     protected function setUp(): void
@@ -41,9 +39,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToAddKeyPair(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->aclCollection
             ->method('insertOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to insert key', 500, $e));
         $this->adapter->addKeyPair('pub', 'priv');
@@ -54,9 +53,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToDeleteKeyPair(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->aclCollection
             ->method('deleteOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to delete key', 500, $e));
         $this->adapter->deletePublicKey('pub');
@@ -67,9 +67,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToUpdatePrivateKey(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->aclCollection
             ->method('updateOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to update private key', 500, $e));
         $this->adapter->updatePrivateKey('pub', 'priv');
@@ -80,9 +81,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToAddAccessRule(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->aclCollection
             ->method('updateOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to add access rule', 500, $e));
         $this->adapter->addAccessRule('pub', [
@@ -96,9 +98,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToDeleteAccessRule(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->aclCollection
             ->method('updateOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to delete access rule', 500, $e));
         $this->adapter->deleteAccessRule('pub', 'ruleId');
@@ -109,9 +112,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToAddResourceGroup(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->aclGroupCollection
             ->method('insertOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to add resource group', 500, $e));
         $this->adapter->addResourceGroup('group', ['group']);
@@ -122,9 +126,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToUpdateResourceGroup(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->aclGroupCollection
             ->method('updateOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to update resource group', 500, $e));
         $this->adapter->updateResourceGroup('group', ['group']);
@@ -135,9 +140,10 @@ class MongoDBTest extends TestCase
      */
     public function testThrowsExceptionWhenUnableToDeleteResourceGroup(): void
     {
+        $e = $this->createMock(MongoDBException::class);
         $this->aclGroupCollection
             ->method('deleteOne')
-            ->willThrowException($e = $this->createMock(MongoDBException::class));
+            ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to delete resource group', 500, $e));
         $this->adapter->deleteResourceGroup('group');

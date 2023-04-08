@@ -12,6 +12,7 @@ use MongoDB\Driver\Exception\RuntimeException as DriverRuntimeException;
 use MongoDB\GridFS\Bucket;
 use MongoDB\GridFS\Exception\FileNotFoundException;
 use MongoDB\Model\BSONDocument;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -42,6 +43,7 @@ class GridFSTest extends TestCase
     {
         $bucketOptions = ['some' => 'option'];
 
+        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -66,6 +68,7 @@ class GridFSTest extends TestCase
                 }),
             );
 
+        /** @var Database&MockObject */
         $database = $this->createMock(Database::class);
         $database
             ->expects($this->once())
@@ -73,6 +76,7 @@ class GridFSTest extends TestCase
             ->with($bucketOptions)
             ->willReturn($bucket);
 
+        /** @var Client&MockObject */
         $client = $this->createMock(Client::class);
         $client
             ->expects($this->once())
@@ -96,6 +100,7 @@ class GridFSTest extends TestCase
     {
         $bucketOptions = ['some' => 'option'];
 
+        /** @var Bucket&MockObject */
         $bucket = $this->createConfiguredMock(Bucket::class, [
             'getBucketName' => 'fs',
         ]);
@@ -108,6 +113,7 @@ class GridFSTest extends TestCase
             ])
             ->willReturn($this->createMock(BSONDocument::class));
 
+        /** @var Collection&MockObject */
         $collection = $this->createMock(Collection::class);
         $collection
             ->expects($this->once())
@@ -118,12 +124,11 @@ class GridFSTest extends TestCase
                     'metadata.imageIdentifier' => $this->imageId,
                 ],
                 $this->callback(
-                    function (array $data): bool {
-                        return is_int($data['$set']['metadata.updated'] ?? null);
-                    },
+                    fn (array $data): bool => is_int($data['$set']['metadata.updated'] ?? null),
                 ),
             );
 
+        /** @var Database&MockObject */
         $database = $this->createMock(Database::class);
         $database
             ->expects($this->once())
@@ -137,6 +142,7 @@ class GridFSTest extends TestCase
             ->with('fs.files')
             ->willReturn($collection);
 
+        /** @var Client&MockObject */
         $client = $this->createMock(Client::class);
         $client
             ->method('selectDatabase')
@@ -157,6 +163,7 @@ class GridFSTest extends TestCase
      */
     public function testCanDeleteImage(): void
     {
+        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -191,6 +198,7 @@ class GridFSTest extends TestCase
      */
     public function testDeleteThrowsExceptionWhenFileDoesNotExist(): void
     {
+        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -228,6 +236,7 @@ class GridFSTest extends TestCase
         fwrite($stream, 'image data');
         rewind($stream);
 
+        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -249,28 +258,12 @@ class GridFSTest extends TestCase
     }
 
     /**
-     * @return array<int, array{0: MongoDBException, 1: StorageException}>
-     */
-    public function getGetImageExceptions(): array
-    {
-        return [
-            [
-                new FileNotFoundException('some error'),
-                new StorageException('File not found', 404),
-            ],
-            [
-                new DriverRuntimeException('some error'),
-                new StorageException('Unable to get image', 500),
-            ],
-        ];
-    }
-
-    /**
      * @dataProvider getGetImageExceptions
      * @covers ::getImage
      */
     public function testGetImageThrowsExceptionWhenErrorOccurs(MongoDBException $mongoDbException, StorageException $storageException): void
     {
+        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -326,5 +319,22 @@ class GridFSTest extends TestCase
         $this->expectExceptionObject(new StorageException('File not found', 404));
         $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
         $adapter->getLastModified($this->user, $this->imageId);
+    }
+
+    /**
+     * @return array<array{mongoDbException:MongoDBException,storageException:StorageException}>
+     */
+    public static function getGetImageExceptions(): array
+    {
+        return [
+            [
+                'mongoDbException' => new FileNotFoundException('some error'),
+                'storageException' => new StorageException('File not found', 404),
+            ],
+            [
+                'mongoDbException' => new DriverRuntimeException('some error'),
+                'storageException' => new StorageException('Unable to get image', 500),
+            ],
+        ];
     }
 }
