@@ -50,6 +50,7 @@
     "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
     "sa": "vendor/bin/phpstan",
     "cs": "vendor/bin/php-cs-fixer fix --dry-run --diff",
+    "cs:fix": "vendor/bin/php-cs-fixer fix --diff",
     "ci": [
       "@sa",
       "@test",

@@ -454,7 +454,7 @@ class MongoDB implements DatabaseInterface
             ];
         }
 
-        $pipeline[] =[
+        $pipeline[] = [
             '$group' => [
                 '_id' => null,
                 'numBytes' => [
