@@ -2,10 +2,10 @@
 namespace Imbo\EventListener\ImageVariations\Database;
 
 use MongoDB\Client;
+use MongoDB\Driver\Exception\RuntimeException;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-/**
- * @coversDefaultClass Imbo\EventListener\ImageVariations\Database\MongoDB
- */
+#[CoversClass(MongoDB::class)]
 class MongoDBIntegrationTest extends DatabaseTests
 {
     private string $databaseName = 'imbo-imagevariations-integration-test';
@@ -33,6 +33,13 @@ class MongoDBIntegrationTest extends DatabaseTests
 
         $uri = (string) getenv('MONGODB_URI');
         $client = new Client($uri, $uriOptions);
+
+        try {
+            $client->getDatabase($this->databaseName)->command(['ping' => 1]);
+        } catch (RuntimeException) {
+            $this->markTestSkipped('MongoDB is not running, start it with `docker compose up -d`', );
+        }
+
         $client->dropDatabase($this->databaseName);
     }
 }

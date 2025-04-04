@@ -12,33 +12,23 @@ use MongoDB\Driver\Exception\RuntimeException as DriverRuntimeException;
 use MongoDB\GridFS\Bucket;
 use MongoDB\GridFS\Exception\FileNotFoundException;
 use MongoDB\Model\BSONDocument;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass Imbo\Storage\GridFS
- */
+#[CoversClass(GridFS::class)]
 class GridFSTest extends TestCase
 {
     private string $user    = 'user';
     private string $imageId = 'image-id';
 
-    /**
-     * @covers ::__construct
-     */
     public function testThrowsExceptionWhenInvalidUriIsSpecified(): void
     {
         $this->expectExceptionObject(new StorageException('Unable to connect to the database', 500));
         new GridFS('some-database', 'foo');
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::store
-     * @covers ::imageExists
-     * @covers ::getImageFilename
-     * @covers ::createStream
-     */
     public function testCanStoreImageThatDoesNotAlreadyExist(): void
     {
         $bucketOptions = ['some' => 'option'];
@@ -59,7 +49,7 @@ class GridFSTest extends TestCase
             ->method('uploadFromStream')
             ->with(
                 'user.image-id',
-                $this->isType('resource'),
+                $this->isResource(),
                 $this->callback(function (array $data): bool {
                     return
                         $this->user === ($data['metadata']['user'] ?? null) &&
@@ -92,10 +82,6 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::store
-     * @covers ::imageExists
-     */
     public function testCanStoreImageThatAlreadyExist(): void
     {
         $bucketOptions = ['some' => 'option'];
@@ -157,10 +143,6 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::delete
-     * @covers ::getImageObject
-     */
     public function testCanDeleteImage(): void
     {
         /** @var Bucket&MockObject */
@@ -193,9 +175,6 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::delete
-     */
     public function testDeleteThrowsExceptionWhenFileDoesNotExist(): void
     {
         /** @var Bucket&MockObject */
@@ -221,10 +200,6 @@ class GridFSTest extends TestCase
         $adapter->delete($this->user, $this->imageId);
     }
 
-    /**
-     * @covers ::getImage
-     * @covers ::getImageFilename
-     */
     public function testCanGetImage(): void
     {
         $stream = fopen('php://temp', 'w');
@@ -257,10 +232,7 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider getGetImageExceptions
-     * @covers ::getImage
-     */
+    #[DataProvider('getGetImageExceptions')]
     public function testGetImageThrowsExceptionWhenErrorOccurs(MongoDBException $mongoDbException, StorageException $storageException): void
     {
         /** @var Bucket&MockObject */
@@ -281,9 +253,6 @@ class GridFSTest extends TestCase
         $adapter->getImage($this->user, $this->imageId);
     }
 
-    /**
-     * @covers ::getLastModified
-     */
     public function testCanGetLastModified(): void
     {
         $time = time();
@@ -303,9 +272,6 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::getLastModified
-     */
     public function testGetLastModifiedCanFail(): void
     {
         $client = $this->createConfiguredMock(Client::class, [

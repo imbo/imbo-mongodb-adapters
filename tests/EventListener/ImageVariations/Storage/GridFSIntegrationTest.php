@@ -2,12 +2,13 @@
 namespace Imbo\EventListener\ImageVariations\Storage;
 
 use MongoDB\Client;
+use MongoDB\Driver\Exception\RuntimeException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass Imbo\EventListener\ImageVariations\Storage\GridFS
- * @group integration
- */
+#[CoversClass(GridFS::class)]
+#[Group('integration')]
 class GridFSIntegrationTest extends TestCase
 {
     private GridFS $adapter;
@@ -24,16 +25,18 @@ class GridFSIntegrationTest extends TestCase
         ]);
 
         $uri = (string) getenv('MONGODB_URI');
-        (new Client($uri, $uriOptions))->dropDatabase($this->databaseName);
+        $client = new Client($uri, $uriOptions);
 
+        try {
+            $client->getDatabase($this->databaseName)->command(['ping' => 1]);
+        } catch (RuntimeException) {
+            $this->markTestSkipped('MongoDB is not running, start it with `docker compose up -d`', );
+        }
+
+        $client->dropDatabase($this->databaseName);
         $this->adapter = new GridFS($this->databaseName, $uri, $uriOptions);
     }
 
-    /**
-     * @covers ::storeImageVariation
-     * @covers ::getImageVariation
-     * @covers ::deleteImageVariations
-     */
     public function testCanIntegrateWithMongoDB(): void
     {
         foreach ([100, 200, 300] as $width) {

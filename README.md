@@ -10,7 +10,7 @@
 
 ## Usage
 
-This package provides both storage and database adapters for Imbo, leveraging [GridFS](https://docs.mongodb.com/manual/core/gridfs/) and MongoDB. The package also has a storage adapter for image variations.
+This package provides both storage and database adapters for Imbo, leveraging [GridFS](https://www.mongodb.com/docs/manual/core/gridfs/) and MongoDB. The package also has a storage adapter for image variations.
 
 ```php
 $mainDatabaseAdapter = new Imbo\Database\MongoDB();

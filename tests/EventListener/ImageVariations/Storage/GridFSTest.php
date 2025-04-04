@@ -9,32 +9,23 @@ use MongoDB\Driver\Exception\RuntimeException as DriverRuntimeException;
 use MongoDB\GridFS\Bucket;
 use MongoDB\GridFS\Exception\FileNotFoundException;
 use MongoDB\Model\BSONDocument;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass Imbo\EventListener\ImageVariations\Storage\GridFS
- */
+#[CoversClass(GridFS::class)]
 class GridFSTest extends TestCase
 {
     private string $user    = 'user';
     private string $imageId = 'image-id';
 
-    /**
-     * @covers ::__construct
-     */
     public function testThrowsExceptionWhenInvalidUriIsSpecified(): void
     {
         $this->expectExceptionObject(new StorageException('Unable to connect to the database', 500));
         new GridFS('some-database', 'foo');
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::storeImageVariation
-     * @covers ::getImageFilename
-     * @covers ::createStream
-     */
     public function testCanStoreImageVariation(): void
     {
         $bucketOptions = ['some' => 'option'];
@@ -46,7 +37,7 @@ class GridFSTest extends TestCase
             ->method('uploadFromStream')
             ->with(
                 'user.image-id.100',
-                $this->isType('resource'),
+                $this->isResource(),
                 $this->callback(function (array $data): bool {
                     return
                         is_int($data['metadata']['added'] ?? null) &&
@@ -80,10 +71,6 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::getImageVariation
-     * @covers ::getImageFilename
-     */
     public function testCanGetImageVariation(): void
     {
         $stream = fopen('php://temp', 'w');
@@ -116,10 +103,7 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider getGetImageExceptions
-     * @covers ::getImageVariation
-     */
+    #[DataProvider('getGetImageExceptions')]
     public function testGetImageVariationThrowsExceptionWhenErrorOccurs(MongoDBException $mongoDbException, StorageException $storageException): void
     {
         /** @var Bucket&MockObject */
@@ -140,9 +124,6 @@ class GridFSTest extends TestCase
         $adapter->getImageVariation($this->user, $this->imageId, 100);
     }
 
-    /**
-     * @covers ::deleteImageVariations
-     */
     public function testCanDeleteImageVariations(): void
     {
         /** @var Bucket&MockObject */
@@ -186,9 +167,6 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::deleteImageVariations
-     */
     public function testCanDeleteSpecificImageVariation(): void
     {
         /** @var Bucket&MockObject */
@@ -222,9 +200,6 @@ class GridFSTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::deleteImageVariations
-     */
     public function testDeleteThrowsExceptionWhenFileDoesNotExist(): void
     {
         /** @var Bucket&MockObject */

@@ -3,11 +3,11 @@ namespace Imbo\Helpers;
 
 use MongoDB\Model\BSONArray;
 use MongoDB\Model\BSONDocument;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass Imbo\Helpers\BSONToArray
- */
+#[CoversClass(BSONToArray::class)]
 class BSONToArrayTest extends TestCase
 {
     private BSONToArray $helper;
@@ -17,11 +17,7 @@ class BSONToArrayTest extends TestCase
         $this->helper = new BSONToArray();
     }
 
-    /**
-     * @dataProvider getValues
-     * @covers ::toArray
-     * @covers ::isBSONModel
-     */
+    #[DataProvider('getValues')]
     public function testCanConvertValuesToArray(mixed $document, mixed $expected): void
     {
         $this->assertSame($expected, $this->helper->toArray($document));

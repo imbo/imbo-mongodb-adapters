@@ -5,12 +5,11 @@ use Imbo\Exception\DatabaseException;
 use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass Imbo\EventListener\ImageVariations\Database\MongoDB
- */
+#[CoversClass(MongoDB::class)]
 class MongoDBTest extends TestCase
 {
     private Collection&MockObject $collection;
@@ -30,10 +29,6 @@ class MongoDBTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::storeImageVariationMetadata
-     */
     public function testThrowsExceptionWhenUnableToStoreImageVariationMetadata(): void
     {
         $e = $this->createMock(MongoDBException::class);

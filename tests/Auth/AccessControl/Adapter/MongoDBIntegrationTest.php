@@ -2,10 +2,10 @@
 namespace Imbo\Auth\AccessControl\Adapter;
 
 use MongoDB\Client;
+use MongoDB\Driver\Exception\RuntimeException;
+use PHPUnit\Framework\Attributes\CoversClass;
 
-/**
- * @coversDefaultClass Imbo\Auth\AccessControl\Adapter\MongoDB
- */
+#[CoversClass(MongoDB::class)]
 class MongoDBIntegrationTest extends MutableAdapterTests
 {
     private string $databaseName = 'imbo-auth-accesscontrol-adapter-mongodb-integration-test';
@@ -33,6 +33,13 @@ class MongoDBIntegrationTest extends MutableAdapterTests
 
         $uri = (string) getenv('MONGODB_URI');
         $client = new Client($uri, $uriOptions);
+
+        try {
+            $client->getDatabase($this->databaseName)->command(['ping' => 1]);
+        } catch (RuntimeException) {
+            $this->markTestSkipped('MongoDB is not running, start it with `docker compose up -d`', );
+        }
+
         $client->dropDatabase($this->databaseName);
     }
 }

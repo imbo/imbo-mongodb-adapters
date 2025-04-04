@@ -123,9 +123,7 @@ class GridFS implements StorageInterface
         $stream = fopen('php://temp', 'w+b');
 
         if (false === $stream) {
-            // @codeCoverageIgnoreStart
             throw new StorageException('Unable to open stream', 500);
-            // @codeCoverageIgnoreEnd
         }
 
         fwrite($stream, $data);

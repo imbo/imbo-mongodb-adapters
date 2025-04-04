@@ -323,8 +323,7 @@ class MongoDB implements DatabaseInterface
             $image['added']   = new DateTime('@' . (int) $image['added']);
             $image['updated'] = new DateTime('@' . (int) $image['updated']);
 
-            /** @var array<string, mixed> */
-            $images[]         = $this->bsonToArray->toArray($image->getArrayCopy());
+            $images[] = $this->bsonToArray->toArray($image->getArrayCopy());
         }
 
         return $images;
@@ -496,11 +495,9 @@ class MongoDB implements DatabaseInterface
             $result = $this->client
                 ->getManager()
                 ->executeCommand($this->databaseName, new Command(['serverStatus' => 1]));
-            // @codeCoverageIgnoreStart
         } catch (MongoDBException $e) {
             return false;
         }
-        // @codeCoverageIgnoreEnd
 
         return (bool) $result->getServer()->getInfo()['ok'];
     }
@@ -589,7 +586,6 @@ class MongoDB implements DatabaseInterface
             throw new DatabaseException('Missing query from result', 500);
         }
 
-        /** @var array<string, string|string[]> */
         $result['query'] = unserialize((string) $result['query']);
 
         /**

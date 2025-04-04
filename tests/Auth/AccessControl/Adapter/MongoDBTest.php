@@ -5,12 +5,11 @@ use Imbo\Exception\DatabaseException;
 use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @coversDefaultClass Imbo\Auth\AccessControl\Adapter\MongoDB
- */
+#[CoversClass(MongoDB::class)]
 class MongoDBTest extends TestCase
 {
     private Collection&MockObject $aclCollection;
@@ -33,10 +32,6 @@ class MongoDBTest extends TestCase
         );
     }
 
-    /**
-     * @covers ::__construct
-     * @covers ::addKeyPair
-     */
     public function testThrowsExceptionWhenUnableToAddKeyPair(): void
     {
         $e = $this->createMock(MongoDBException::class);
@@ -48,9 +43,6 @@ class MongoDBTest extends TestCase
         $this->adapter->addKeyPair('pub', 'priv');
     }
 
-    /**
-     * @covers ::deletePublicKey
-     */
     public function testThrowsExceptionWhenUnableToDeleteKeyPair(): void
     {
         $e = $this->createMock(MongoDBException::class);
@@ -62,9 +54,6 @@ class MongoDBTest extends TestCase
         $this->adapter->deletePublicKey('pub');
     }
 
-    /**
-     * @covers ::updatePrivateKey
-     */
     public function testThrowsExceptionWhenUnableToUpdatePrivateKey(): void
     {
         $e = $this->createMock(MongoDBException::class);
@@ -76,9 +65,6 @@ class MongoDBTest extends TestCase
         $this->adapter->updatePrivateKey('pub', 'priv');
     }
 
-    /**
-     * @covers ::addAccessRule
-     */
     public function testThrowsExceptionWhenUnableToAddAccessRule(): void
     {
         $e = $this->createMock(MongoDBException::class);
@@ -93,9 +79,6 @@ class MongoDBTest extends TestCase
         ]);
     }
 
-    /**
-     * @covers ::deleteAccessRule
-     */
     public function testThrowsExceptionWhenUnableToDeleteAccessRule(): void
     {
         $e = $this->createMock(MongoDBException::class);
@@ -107,9 +90,6 @@ class MongoDBTest extends TestCase
         $this->adapter->deleteAccessRule('pub', 'ruleId');
     }
 
-    /**
-     * @covers ::addResourceGroup
-     */
     public function testThrowsExceptionWhenUnableToAddResourceGroup(): void
     {
         $e = $this->createMock(MongoDBException::class);
@@ -121,9 +101,6 @@ class MongoDBTest extends TestCase
         $this->adapter->addResourceGroup('group', ['group']);
     }
 
-    /**
-     * @covers ::updateResourceGroup
-     */
     public function testThrowsExceptionWhenUnableToUpdateResourceGroup(): void
     {
         $e = $this->createMock(MongoDBException::class);
@@ -135,9 +112,6 @@ class MongoDBTest extends TestCase
         $this->adapter->updateResourceGroup('group', ['group']);
     }
 
-    /**
-     * @covers ::deleteResourceGroup
-     */
     public function testThrowsExceptionWhenUnableToDeleteResourceGroup(): void
     {
         $e = $this->createMock(MongoDBException::class);

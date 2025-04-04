@@ -135,11 +135,9 @@ class GridFS implements StorageInterface
             $result = $this->client
                 ->getManager()
                 ->executeCommand($this->databaseName, new Command(['serverStatus' => 1]));
-            // @codeCoverageIgnoreStart
         } catch (MongoDBException $e) {
             return false;
         }
-        // @codeCoverageIgnoreEnd
 
         return (bool) $result->getServer()->getInfo()['ok'];
     }
@@ -180,9 +178,7 @@ class GridFS implements StorageInterface
         $stream = fopen('php://temp', 'w+b');
 
         if (false === $stream) {
-            // @codeCoverageIgnoreStart
             throw new StorageException('Unable to open stream', 500);
-            // @codeCoverageIgnoreEnd
         }
 
         fwrite($stream, $data);
