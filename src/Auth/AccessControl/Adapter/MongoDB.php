@@ -3,96 +3,67 @@ namespace Imbo\Auth\AccessControl\Adapter;
 
 use Imbo\Auth\AccessControl\GroupQuery;
 use Imbo\Exception\DatabaseException;
-use Imbo\Helpers\BSONToArray;
 use Imbo\Model\Groups as GroupsModel;
 use MongoDB\BSON\ObjectId as MongoId;
 use MongoDB\Client;
 use MongoDB\Collection;
-use MongoDB\Driver\Cursor;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
+use MongoDB\Driver\Exception\InvalidArgumentException as MongoDBInvalidArgumentException;
 use MongoDB\Model\BSONArray;
 
-/**
- * MongoDB access control adapter
- */
 class MongoDB extends AbstractAdapter implements MutableAdapterInterface
 {
-    private Client $client;
-    private string $databaseName;
+    public const ACL_COLLECTION_NAME       = 'accesscontrol';
+    public const ACL_GROUP_COLLECTION_NAME = 'accesscontrolgroup';
+
     private Collection $aclCollection;
     private Collection $aclGroupCollection;
-    private BSONToArray $bsonToArray;
-
-    public const ACL_COLLECTION       = 'accesscontrol';
-    public const ACL_GROUP_COLLECTION = 'accesscontrolgroup';
 
     /**
-     * Class constructor
+     * Create a new MongoDB access control adapter
      *
-     * @param string $databaseName Name of the database to use
-     * @param string $uri URI to connect to
-     * @param array<string, mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
-     * @param array<string, mixed> $driverOptions Additional options for the MongoDB\Client instance
-     * @param Client $client Pre-configured client
-     * @param Collection $aclCollection Pre-configured collection instance
-     * @param Collection $aclGroupCollection Pre-configured collection instance
-     * @param BSONToArray $bsonToArray Helper to recursively convert documents to arrays
+     * @param string $databaseName The name of the database to use
+     * @param string $uri The URI to use when connecting to MongoDB
+     * @param array<mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
+     * @param array<mixed> $driverOptions Additional options for the MongoDB\Client instance
+     * @param ?Client $client Pre-configured MongoDB client. When specified $uri, $uriOptions and $driverOptions are ignored
      * @throws DatabaseException
      */
     public function __construct(
-        string $databaseName           = 'imbo',
-        string $uri                    = 'mongodb://localhost:27017',
-        array $uriOptions              = [],
-        array $driverOptions           = [],
-        Client $client                 = null,
-        Collection $aclCollection      = null,
-        Collection $aclGroupCollection = null,
-        BSONToArray $bsonToArray       = null
+        string $databaseName = 'imbo',
+        string $uri          = 'mongodb://localhost:27017',
+        array $uriOptions    = [],
+        array $driverOptions = [],
+        ?Client $client      = null,
     ) {
-        $this->databaseName = $databaseName;
-
         try {
-            $this->client = $client ?: new Client(
-                $uri,
-                $uriOptions,
-                $driverOptions,
-            );
+            $client = $client ?: new Client($uri, $uriOptions, $driverOptions);
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to connect to the database', 500, $e);
         }
 
-        $this->aclCollection = $aclCollection ?: $this->client->selectCollection(
-            $this->databaseName,
-            self::ACL_COLLECTION,
-        );
-
-        $this->aclGroupCollection = $aclGroupCollection ?: $this->client->selectCollection(
-            $this->databaseName,
-            self::ACL_GROUP_COLLECTION,
-        );
-
-        $this->bsonToArray = $bsonToArray ?: new BSONToArray();
+        $database = $client->selectDatabase($databaseName);
+        $this->aclCollection = $database->selectCollection(self::ACL_COLLECTION_NAME);
+        $this->aclGroupCollection = $database->selectCollection(self::ACL_GROUP_COLLECTION_NAME);
     }
 
     public function getGroups(GroupQuery $query, GroupsModel $model): array
     {
-        $filter = [];
-
-        /** @var Cursor<array{name:string,resources:BSONArray}> */
-        $cursor = $this->aclGroupCollection
-            ->find($filter, [
-                'skip' => ($query->getPage() - 1) * $query->getLimit(),
-                'limit' => $query->getLimit(),
-            ]);
+        /** @var iterable<array{name:string,resources:BSONArray}> */
+        $cursor = $this->aclGroupCollection->find(options: [
+            'skip' => ($query->getPage() - 1) * $query->getLimit(),
+            'limit' => $query->getLimit(),
+        ]);
 
         $groups = [];
 
         foreach ($cursor as $group) {
             /** @var array<string> */
-            $groups[$group['name']] = $group['resources']->getArrayCopy();
+            $resources = $group['resources']->getArrayCopy();
+            $groups[$group['name']] = $resources;
         }
 
-        $model->setHits($this->aclGroupCollection->countDocuments($filter));
+        $model->setHits($this->aclGroupCollection->countDocuments());
 
         return $groups;
     }
@@ -106,23 +77,21 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
 
     public function getGroup(string $groupName): ?array
     {
-        /** @var array{resources?:BSONArray} */
-        $group = $this->aclGroupCollection->findOne([
+        /** @var ?array{resources:BSONArray} */
+        $document = $this->aclGroupCollection->findOne([
             'name' => $groupName,
         ]);
 
-        if (isset($group['resources'])) {
-            /** @var array<string> */
-            return $group['resources']->getArrayCopy();
-        }
+        $resources = $document['resources'] ?? null;
 
-        return null;
+        /** @var ?array<string> */
+        return $resources?->getArrayCopy();
     }
 
     public function getPrivateKey(string $publicKey): ?string
     {
-        /** @var ?array{privateKey?:string} */
-        $keyPair = $this->aclCollection->findOne([
+        /** @var ?array{privateKey:string} */
+        $document = $this->aclCollection->findOne([
             'publicKey' => $publicKey,
         ], [
             'projection' => [
@@ -130,14 +99,10 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
             ],
         ]);
 
-        if (null === $keyPair || !isset($keyPair['privateKey'])) {
-            return null;
-        }
-
-        return $keyPair['privateKey'];
+        return $document['privateKey'] ?? null;
     }
 
-    public function addKeyPair(string $publicKey, string $privateKey): bool
+    public function addKeyPair(string $publicKey, string $privateKey): true
     {
         try {
             $this->aclCollection->insertOne([
@@ -182,7 +147,7 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
         return (bool) $result->getMatchedCount();
     }
 
-    public function getAccessRule(string $publicKey, $accessRuleId): ?array
+    public function getAccessRule(string $publicKey, int|string $accessRuleId): ?array
     {
         $acl = $this->getAccessListForPublicKey($publicKey);
 
@@ -226,6 +191,8 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
                     ],
                 ],
             ]);
+        } catch (MongoDBInvalidArgumentException $e) {
+            throw new DatabaseException(sprintf('Invalid access rule ID: %s', $accessRuleId), 500, $e);
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to delete access rule', 500, $e);
         }
@@ -233,7 +200,7 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
         return (bool) $result->getModifiedCount();
     }
 
-    public function addResourceGroup(string $groupName, array $resources = []): bool
+    public function addResourceGroup(string $groupName, array $resources = []): true
     {
         try {
             $this->aclGroupCollection->insertOne([
@@ -247,7 +214,7 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
         return true;
     }
 
-    public function updateResourceGroup(string $groupName, array $resources): bool
+    public function updateResourceGroup(string $groupName, array $resources): true
     {
         try {
             $this->aclGroupCollection->updateOne([
@@ -298,8 +265,8 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
 
     public function getAccessListForPublicKey(string $publicKey): array
     {
-        /** @var ?array{acl:array<array{id:MongoId,users:array<string>,resources:array<string>}>} */
-        $keyPair = $this->aclCollection->findOne([
+        /** @var ?array{acl:BSONArray} */
+        $document = $this->aclCollection->findOne([
             'publicKey' => $publicKey,
         ], [
             'projection' => [
@@ -307,16 +274,34 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
             ],
         ]);
 
-        if (null === $keyPair || empty($keyPair['acl'])) {
-            return [];
-        }
-
+        /** @var BSONArray<array<string,mixed>> */
+        $acls = $document['acl'] ?? [];
         $rules = [];
 
-        foreach ($keyPair['acl'] as $rule) {
-            $rule['id'] = (string) $rule['id'];
-            /** @var array{id:string,users:array<string>,resources:array<string>,group?:string} */
-            $rules[] = $this->bsonToArray->toArray($rule);
+        foreach ($acls as $rule) {
+            if (!$rule['resources'] instanceof BSONArray) {
+                continue;
+            }
+
+            if (!$rule['users'] instanceof BSONArray) {
+                continue;
+            }
+
+            if (!$rule['id'] instanceof MongoId) {
+                continue;
+            }
+
+            /** @var array<string> */
+            $resources = $rule['resources']->getArrayCopy();
+
+            /** @var array<string> */
+            $users = $rule['users']->getArrayCopy();
+
+            $rules[] = [
+                'resources' => $resources,
+                'users'     => $users,
+                'id'        => (string) $rule['id'],
+            ];
         }
 
         return $rules;

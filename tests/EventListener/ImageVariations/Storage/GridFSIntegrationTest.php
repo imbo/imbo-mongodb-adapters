@@ -40,9 +40,11 @@ class GridFSIntegrationTest extends TestCase
     public function testCanIntegrateWithMongoDB(): void
     {
         foreach ([100, 200, 300] as $width) {
-            $this->assertTrue(
-                $this->adapter->storeImageVariation($this->user, $this->imageId, (string) file_get_contents($this->fixturesDir . '/test-image.png'), $width),
-                sprintf('Expected adapter to store image with width %d', $width),
+            $this->adapter->storeImageVariation(
+                $this->user,
+                $this->imageId,
+                (string) file_get_contents($this->fixturesDir . '/test-image.png'),
+                $width,
             );
         }
 
@@ -54,14 +56,7 @@ class GridFSIntegrationTest extends TestCase
             );
         }
 
-        $this->assertTrue(
-            $this->adapter->deleteImageVariations($this->user, $this->imageId, 100),
-            'Expected image variation with width 100 to be deleted',
-        );
-
-        $this->assertTrue(
-            $this->adapter->deleteImageVariations($this->user, $this->imageId),
-            'Expected the rest of the image variations to be deleted',
-        );
+        $this->adapter->deleteImageVariations($this->user, $this->imageId, 100);
+        $this->adapter->deleteImageVariations($this->user, $this->imageId);
     }
 }

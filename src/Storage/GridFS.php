@@ -5,34 +5,26 @@ use DateTime;
 use DateTimeZone;
 use Imbo\Exception\StorageException;
 use MongoDB\Client;
-use MongoDB\Driver\Command;
+use MongoDB\Database;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
 use MongoDB\GridFS\Bucket;
 use MongoDB\GridFS\Exception\FileNotFoundException;
 use MongoDB\Model\BSONDocument;
 
-/**
- * GridFS (MongoDB) storage adapter for images
- */
 class GridFS implements StorageInterface
 {
-    private string $databaseName;
-    private Client $client;
     private Bucket $bucket;
+    private Database $database;
 
     /**
      * Class constructor
      *
-     * @param string $databaseName Name of the database to use
-     * @param string $uri URI to connect to
-     * @param array<string, mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
-     * @param array<string, mixed> $driverOptions Additional options for the MongoDB\Client instance
-     * @param array<string, mixed> $bucketOptions Options for the bucket operations
-     * @param Client $client Pre-configured client
-     * @throws StorageException
-     *
-     * @see https://docs.mongodb.com/php-library/v1.6/reference/method/MongoDBClient__construct/
-     * @see https://docs.mongodb.com/php-library/v1.6/reference/method/MongoDBDatabase-selectGridFSBucket/#
+     * @param string $databaseName The name of the database to use
+     * @param string $uri The URI to use when connecting to MongoDB
+     * @param array<mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
+     * @param array<mixed> $driverOptions Additional options for the MongoDB\Client instance
+     * @param array<mixed> $bucketOptions Options for the bucket operations
+     * @param ?Client $client Pre-configured MongoDB client. When specified $uri, $uriOptions and $driverOptions are ignored
      */
     public function __construct(
         string $databaseName = 'imbo_storage',
@@ -40,65 +32,64 @@ class GridFS implements StorageInterface
         array $uriOptions    = [],
         array $driverOptions = [],
         array $bucketOptions = [],
-        Client $client       = null
+        ?Client $client      = null,
     ) {
-        $this->databaseName = $databaseName;
-
         try {
-            $this->client = $client ?: new Client(
-                $uri,
-                $uriOptions,
-                $driverOptions,
-            );
+            $client = $client ?: new Client($uri, $uriOptions, $driverOptions);
         } catch (MongoDBException $e) {
             throw new StorageException('Unable to connect to the database', 500, $e);
         }
 
-        $this->bucket = $this->client
-            ->selectDatabase($this->databaseName)
-            ->selectGridFSBucket($bucketOptions);
+        $this->database = $client->selectDatabase($databaseName);
+        $this->bucket = $this->database->selectGridFSBucket($bucketOptions);
     }
 
-    public function store(string $user, string $imageIdentifier, string $imageData): bool
+    public function store(string $user, string $imageIdentifier, string $imageData): true
     {
         if ($this->imageExists($user, $imageIdentifier)) {
-            $collectionName = $this->bucket->getBucketName() . '.files';
-            $collection     = $this->client->selectDatabase($this->databaseName)->selectCollection($collectionName);
-            $collection->updateOne([
-                'metadata.user'            => $user,
-                'metadata.imageIdentifier' => $imageIdentifier,
-            ], [
-                '$set' => [
-                    'metadata.updated' => time(),
-                ],
-            ]);
+            $collection = $this->database->selectCollection(
+                $this->bucket->getBucketName() . '.files',
+            );
+
+            try {
+                $collection->updateOne([
+                    'metadata.user'            => $user,
+                    'metadata.imageIdentifier' => $imageIdentifier,
+                ], [
+                    '$set' => [
+                        'metadata.updated' => time(),
+                    ],
+                ]);
+            } catch (MongoDBException $e) {
+                throw new StorageException('Unable to update image', 500, $e);
+            }
 
             return true;
         }
 
-        $this->bucket->uploadFromStream(
-            $this->getImageFilename($user, $imageIdentifier),
-            $this->createStream($imageData),
-            [
-                'metadata' => [
-                    'user'            => $user,
-                    'imageIdentifier' => $imageIdentifier,
-                    'updated'         => time(),
+        try {
+            $this->bucket->uploadFromStream(
+                $this->getImageFilename($user, $imageIdentifier),
+                $this->createStream($imageData),
+                [
+                    'metadata' => [
+                        'user'            => $user,
+                        'imageIdentifier' => $imageIdentifier,
+                        'updated'         => time(),
+                    ],
                 ],
-            ],
-        );
+            );
+        } catch (MongoDBException $e) {
+            throw new StorageException('Unable to store image', 500, $e);
+        }
 
         return true;
     }
 
-    public function delete(string $user, string $imageIdentifier): bool
+    public function delete(string $user, string $imageIdentifier): true
     {
+        /** @var array{_id:string} */
         $file = $this->getImageObject($user, $imageIdentifier);
-
-        if (null === $file) {
-            throw new StorageException('File not found', 404);
-        }
-
         $this->bucket->delete($file['_id']);
 
         return true;
@@ -119,57 +110,55 @@ class GridFS implements StorageInterface
 
     public function getLastModified(string $user, string $imageIdentifier): DateTime
     {
-        /** @var ?array{metadata: array{updated: int}} */
+        /** @var array{metadata:array{updated:int}} */
         $file = $this->getImageObject($user, $imageIdentifier);
-
-        if (null === $file) {
-            throw new StorageException('File not found', 404);
-        }
-
         return new DateTime('@' . $file['metadata']['updated'], new DateTimeZone('UTC'));
     }
 
     public function getStatus(): bool
     {
         try {
-            $result = $this->client
-                ->getManager()
-                ->executeCommand($this->databaseName, new Command(['serverStatus' => 1]));
+            $this->database->command(['ping' => 1]);
         } catch (MongoDBException $e) {
             return false;
         }
 
-        return (bool) $result->getServer()->getInfo()['ok'];
+        return true;
     }
 
     public function imageExists(string $user, string $imageIdentifier): bool
     {
-        return null !== $this->bucket->findOne([
-            'metadata.user'            => $user,
-            'metadata.imageIdentifier' => $imageIdentifier,
-        ]);
+        try {
+            return null !== $this->bucket->findOne([
+                'metadata.user'            => $user,
+                'metadata.imageIdentifier' => $imageIdentifier,
+            ]);
+        } catch (MongoDBException $e) {
+            throw new StorageException('Unable to check if image exists', 500, $e);
+        }
     }
 
     /**
-     * Get an image object
-     *
-     * @param string $user The user which the image belongs to
-     * @param string $imageIdentifier The image identifier
-     * @return ?BSONDocument Returns null if the file does not exist or the file as an object otherwise
+     * @return array<string,mixed>
      */
-    protected function getImageObject(string $user, string $imageIdentifier): ?BSONDocument
+    protected function getImageObject(string $user, string $imageIdentifier): array
     {
         /** @var ?BSONDocument */
-        return $this->bucket->findOne([
+        $document = $this->bucket->findOne([
             'metadata.user'            => $user,
             'metadata.imageIdentifier' => $imageIdentifier,
         ]);
+
+        if (null === $document) {
+            throw new StorageException('File not found', 404);
+        }
+
+        return $document->getArrayCopy();
     }
 
     /**
      * Create a stream for a string
      *
-     * @param string $data The string to use in the stream
      * @throws StorageException
      * @return resource
      */
@@ -187,13 +176,6 @@ class GridFS implements StorageInterface
         return $stream;
     }
 
-    /**
-     * Get the image filename
-     *
-     * @param string $user
-     * @param string $imageIdentifier
-     * @return string
-     */
     private function getImageFilename(string $user, string $imageIdentifier): string
     {
         return $user . '.' . $imageIdentifier;

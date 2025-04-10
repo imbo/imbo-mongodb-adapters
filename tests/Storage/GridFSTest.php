@@ -14,7 +14,6 @@ use MongoDB\GridFS\Exception\FileNotFoundException;
 use MongoDB\Model\BSONDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(GridFS::class)]
@@ -33,7 +32,6 @@ class GridFSTest extends TestCase
     {
         $bucketOptions = ['some' => 'option'];
 
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -58,7 +56,6 @@ class GridFSTest extends TestCase
                 }),
             );
 
-        /** @var Database&MockObject */
         $database = $this->createMock(Database::class);
         $database
             ->expects($this->once())
@@ -66,7 +63,6 @@ class GridFSTest extends TestCase
             ->with($bucketOptions)
             ->willReturn($bucket);
 
-        /** @var Client&MockObject */
         $client = $this->createMock(Client::class);
         $client
             ->expects($this->once())
@@ -74,19 +70,14 @@ class GridFSTest extends TestCase
             ->with('database-name')
             ->willReturn($database);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], $bucketOptions, $client);
-
-        $this->assertTrue(
-            $adapter->store($this->user, $this->imageId, 'image data'),
-            'Expected adapter to store image',
-        );
+        $adapter = new GridFS('database-name', bucketOptions: $bucketOptions, client: $client);
+        $adapter->store($this->user, $this->imageId, 'image data');
     }
 
     public function testCanStoreImageThatAlreadyExist(): void
     {
         $bucketOptions = ['some' => 'option'];
 
-        /** @var Bucket&MockObject */
         $bucket = $this->createConfiguredMock(Bucket::class, [
             'getBucketName' => 'fs',
         ]);
@@ -99,7 +90,6 @@ class GridFSTest extends TestCase
             ])
             ->willReturn($this->createMock(BSONDocument::class));
 
-        /** @var Collection&MockObject */
         $collection = $this->createMock(Collection::class);
         $collection
             ->expects($this->once())
@@ -114,7 +104,6 @@ class GridFSTest extends TestCase
                 ),
             );
 
-        /** @var Database&MockObject */
         $database = $this->createMock(Database::class);
         $database
             ->expects($this->once())
@@ -128,24 +117,18 @@ class GridFSTest extends TestCase
             ->with('fs.files')
             ->willReturn($collection);
 
-        /** @var Client&MockObject */
         $client = $this->createMock(Client::class);
         $client
             ->method('selectDatabase')
             ->with('database-name')
             ->willReturn($database);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], $bucketOptions, $client);
-
-        $this->assertTrue(
-            $adapter->store($this->user, $this->imageId, 'image data'),
-            'Expected adapter to store image',
-        );
+        $adapter = new GridFS('database-name', bucketOptions: $bucketOptions, client: $client);
+        $adapter->store($this->user, $this->imageId, 'image data');
     }
 
     public function testCanDeleteImage(): void
     {
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -167,17 +150,12 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
-
-        $this->assertTrue(
-            $adapter->delete($this->user, $this->imageId),
-            'Expected adapter to delete image',
-        );
+        $adapter = new GridFS('database-name', client: $client);
+        $adapter->delete($this->user, $this->imageId);
     }
 
     public function testDeleteThrowsExceptionWhenFileDoesNotExist(): void
     {
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -194,7 +172,7 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
+        $adapter = new GridFS('database-name', client: $client);
 
         $this->expectExceptionObject(new StorageException('File not found', 404));
         $adapter->delete($this->user, $this->imageId);
@@ -211,7 +189,6 @@ class GridFSTest extends TestCase
         fwrite($stream, 'image data');
         rewind($stream);
 
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -225,7 +202,7 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
+        $adapter = new GridFS('database-name', client: $client);
         $this->assertSame(
             'image data',
             $adapter->getImage($this->user, $this->imageId),
@@ -235,7 +212,6 @@ class GridFSTest extends TestCase
     #[DataProvider('getGetImageExceptions')]
     public function testGetImageThrowsExceptionWhenErrorOccurs(MongoDBException $mongoDbException, StorageException $storageException): void
     {
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -248,7 +224,7 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
+        $adapter = new GridFS('database-name', client: $client);
         $this->expectExceptionObject($storageException);
         $adapter->getImage($this->user, $this->imageId);
     }
@@ -265,7 +241,7 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
+        $adapter = new GridFS('database-name', client: $client);
         $this->assertEquals(
             new DateTime('@' . $time, new DateTimeZone('UTC')),
             $adapter->getLastModified($this->user, $this->imageId),
@@ -283,7 +259,7 @@ class GridFSTest extends TestCase
         ]);
 
         $this->expectExceptionObject(new StorageException('File not found', 404));
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
+        $adapter = new GridFS('database-name', client: $client);
         $adapter->getLastModified($this->user, $this->imageId);
     }
 

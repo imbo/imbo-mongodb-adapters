@@ -43,7 +43,7 @@ class MongoDBIntegrationTest extends DatabaseTests
         }
 
         $client->dropDatabase($this->databaseName);
-        $client->selectCollection($this->databaseName, MongoDB::IMAGE_COLLECTION)->createIndex([
+        $client->selectCollection($this->databaseName, MongoDB::IMAGE_COLLECTION_NAME)->createIndex([
             'user'            => 1,
             'imageIdentifier' => 1,
         ], [

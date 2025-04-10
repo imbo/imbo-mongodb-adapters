@@ -27,7 +27,7 @@
     "friendsofphp/php-cs-fixer": "^3.75",
     "imbo/imbo": "dev-main",
     "imbo/imbo-adapters-sdk": "dev-main",
-    "imbo/imbo-coding-standard": "^2.0",
+    "imbo/imbo-coding-standard": "dev-main",
     "phpstan/extension-installer": "^1.4",
     "phpstan/phpstan": "^2.1",
     "phpstan/phpstan-deprecation-rules": "^2.0",
@@ -49,11 +49,11 @@
     "test": "vendor/bin/phpunit",
     "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
     "sa": "vendor/bin/phpstan",
-    "cs": "vendor/bin/php-cs-fixer fix --dry-run --diff",
+    "cs": "vendor/bin/php-cs-fixer check --diff",
     "cs:fix": "vendor/bin/php-cs-fixer fix --diff",
     "ci": [
-      "@sa",
       "@test",
+      "@sa",
       "@cs"
     ]
   },

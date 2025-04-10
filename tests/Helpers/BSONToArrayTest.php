@@ -10,49 +10,22 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(BSONToArray::class)]
 class BSONToArrayTest extends TestCase
 {
-    private BSONToArray $helper;
-
-    public function setUp(): void
-    {
-        $this->helper = new BSONToArray();
-    }
-
+    /**
+     * @param BSONDocument|BSONArray|array<mixed> $document
+     * @param array<mixed> $expected
+     */
     #[DataProvider('getValues')]
-    public function testCanConvertValuesToArray(mixed $document, mixed $expected): void
+    public function testCanConvertValuesToArray(BSONDocument|BSONArray|array $document, array $expected): void
     {
-        $this->assertSame($expected, $this->helper->toArray($document));
+        $this->assertSame($expected, (new BSONToArray())->toArray($document));
     }
 
     /**
-     * @return array<string,array{document:mixed,expected:mixed}>
+     * @return array<string,array{document:BSONDocument|BSONArray|array<mixed>,expected:array<mixed>}>
      */
     public static function getValues(): array
     {
         return [
-            'string value' => [
-                'document' => 'string',
-                'expected' => 'string',
-            ],
-            'integer value' => [
-                'document' => 1,
-                'expected' => 1,
-            ],
-            'float value' => [
-                'document' => [1.1],
-                'expected' => [1.1],
-            ],
-            'true boolean value' => [
-                'document' => true,
-                'expected' => true,
-            ],
-            'false boolean value' => [
-                'document' => false,
-                'expected' => false,
-            ],
-            'list value' => [
-                'document' => [1, 2],
-                'expected' => [1, 2],
-            ],
             'simple bson-array' => [
                 'document' => new BSONArray([1, 2, 3]),
                 'expected' => [1, 2, 3],

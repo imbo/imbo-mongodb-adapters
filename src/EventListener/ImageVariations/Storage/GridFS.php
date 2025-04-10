@@ -7,28 +7,20 @@ use MongoDB\Driver\Exception\Exception as MongoDBException;
 use MongoDB\GridFS\Bucket;
 use MongoDB\GridFS\Exception\FileNotFoundException;
 
-/**
- * GridFS (MongoDB) storage adapter for image variations
- */
 class GridFS implements StorageInterface
 {
-    private string $databaseName;
-    private Client $client;
     private Bucket $bucket;
 
     /**
-     * Class constructor
+     * Create a new GridFS storage adapter
      *
-     * @param string $databaseName Name of the database to use
-     * @param string $uri URI to connect to
-     * @param array<string, mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
-     * @param array<string, mixed> $driverOptions Additional options for the MongoDB\Client instance
-     * @param array<string, mixed> $bucketOptions Options for the bucket operations
-     * @param Client $client Pre-configured client
+     * @param string $databaseName The name of the database to use
+     * @param string $uri The URI to use when connecting to MongoDB
+     * @param array<mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
+     * @param array<mixed> $driverOptions Additional options for the MongoDB\Client instance
+     * @param array<mixed> $bucketOptions Options for the bucket operations
+     * @param ?Client $client Pre-configured MongoDB client. When specified $uri, $uriOptions and $driverOptions are ignored
      * @throws StorageException
-     *
-     * @see https://docs.mongodb.com/php-library/v1.6/reference/method/MongoDBClient__construct/
-     * @see https://docs.mongodb.com/php-library/v1.6/reference/method/MongoDBDatabase-selectGridFSBucket/#
      */
     public function __construct(
         string $databaseName = 'imbo_imagevariation_storage',
@@ -36,39 +28,37 @@ class GridFS implements StorageInterface
         array $uriOptions    = [],
         array $driverOptions = [],
         array $bucketOptions = [],
-        Client $client       = null
+        ?Client $client      = null,
     ) {
-        $this->databaseName = $databaseName;
-
         try {
-            $this->client = $client ?: new Client(
-                $uri,
-                $uriOptions,
-                $driverOptions,
-            );
+            $client = $client ?: new Client($uri, $uriOptions, $driverOptions);
         } catch (MongoDBException $e) {
             throw new StorageException('Unable to connect to the database', 500, $e);
         }
 
-        $this->bucket = $this->client
-            ->selectDatabase($this->databaseName)
+        $this->bucket = $client
+            ->selectDatabase($databaseName)
             ->selectGridFSBucket($bucketOptions);
     }
 
-    public function storeImageVariation(string $user, string $imageIdentifier, string $blob, int $width): bool
+    public function storeImageVariation(string $user, string $imageIdentifier, string $blob, int $width): true
     {
-        $this->bucket->uploadFromStream(
-            $this->getImageFilename($user, $imageIdentifier, $width),
-            $this->createStream($blob),
-            [
-                'metadata' => [
-                    'added'           => time(),
-                    'user'            => $user,
-                    'imageIdentifier' => $imageIdentifier,
-                    'width'           => $width,
+        try {
+            $this->bucket->uploadFromStream(
+                $this->getImageFilename($user, $imageIdentifier, $width),
+                $this->createStream($blob),
+                [
+                    'metadata' => [
+                        'added'           => time(),
+                        'user'            => $user,
+                        'imageIdentifier' => $imageIdentifier,
+                        'width'           => $width,
+                    ],
                 ],
-            ],
-        );
+            );
+        } catch (MongoDBException $e) {
+            throw new StorageException('Unable to store image variation', 500, $e);
+        }
 
         return true;
     }
@@ -86,7 +76,7 @@ class GridFS implements StorageInterface
         }
     }
 
-    public function deleteImageVariations(string $user, string $imageIdentifier, int $width = null): bool
+    public function deleteImageVariations(string $user, string $imageIdentifier, ?int $width = null): true
     {
         $filter = [
             'metadata.user'            => $user,
@@ -97,7 +87,7 @@ class GridFS implements StorageInterface
             $filter['metadata.width'] = $width;
         }
 
-        /** @var array<int, array{_id: string}> */
+        /** @var iterable<array{_id:string}> */
         $files = $this->bucket->find($filter);
 
         foreach ($files as $file) {
@@ -114,7 +104,6 @@ class GridFS implements StorageInterface
     /**
      * Create a stream for a string
      *
-     * @param string $data The string to use in the stream
      * @throws StorageException
      * @return resource
      */
@@ -132,14 +121,6 @@ class GridFS implements StorageInterface
         return $stream;
     }
 
-    /**
-     * Get the image variation filename
-     *
-     * @param string $user
-     * @param string $imageIdentifier
-     * @param int $width
-     * @return string
-     */
     private function getImageFilename(string $user, string $imageIdentifier, int $width): string
     {
         return $user . '.' . $imageIdentifier . '.' . $width;

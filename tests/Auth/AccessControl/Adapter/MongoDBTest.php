@@ -4,6 +4,7 @@ namespace Imbo\Auth\AccessControl\Adapter;
 use Imbo\Exception\DatabaseException;
 use MongoDB\Client;
 use MongoDB\Collection;
+use MongoDB\Database;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -21,21 +22,27 @@ class MongoDBTest extends TestCase
         $this->aclCollection = $this->createMock(Collection::class);
         $this->aclGroupCollection = $this->createMock(Collection::class);
 
-        $this->adapter = new MongoDB(
-            'imbo',
-            'mongodb://localhost:27017',
-            [],
-            [],
-            $this->createMock(Client::class),
-            $this->aclCollection,
-            $this->aclGroupCollection,
-        );
+        $database = $this->createStub(Database::class);
+        $database
+            ->method('selectCollection')
+            ->willReturnCallback(
+                fn (string $collectionName): Collection&MockObject =>
+                match ($collectionName) {
+                    MongoDB::ACL_COLLECTION_NAME => $this->aclCollection,
+                    MongoDB::ACL_GROUP_COLLECTION_NAME => $this->aclGroupCollection,
+                    default => $this->fail(sprintf('Unknown collection name: %s', $collectionName)),
+                },
+            );
+        $this->adapter = new MongoDB(client: $this->createConfiguredMock(Client::class, [
+            'selectDatabase' => $database,
+        ]));
     }
 
     public function testThrowsExceptionWhenUnableToAddKeyPair(): void
     {
         $e = $this->createMock(MongoDBException::class);
         $this->aclCollection
+            ->expects($this->once())
             ->method('insertOne')
             ->willThrowException($e);
 
@@ -47,6 +54,7 @@ class MongoDBTest extends TestCase
     {
         $e = $this->createMock(MongoDBException::class);
         $this->aclCollection
+            ->expects($this->once())
             ->method('deleteOne')
             ->willThrowException($e);
 
@@ -58,6 +66,7 @@ class MongoDBTest extends TestCase
     {
         $e = $this->createMock(MongoDBException::class);
         $this->aclCollection
+            ->expects($this->once())
             ->method('updateOne')
             ->willThrowException($e);
 
@@ -67,8 +76,9 @@ class MongoDBTest extends TestCase
 
     public function testThrowsExceptionWhenUnableToAddAccessRule(): void
     {
-        $e = $this->createMock(MongoDBException::class);
+        $e = $this->createStub(MongoDBException::class);
         $this->aclCollection
+            ->expects($this->once())
             ->method('updateOne')
             ->willThrowException($e);
 
@@ -81,19 +91,21 @@ class MongoDBTest extends TestCase
 
     public function testThrowsExceptionWhenUnableToDeleteAccessRule(): void
     {
-        $e = $this->createMock(MongoDBException::class);
+        $e = $this->createStub(MongoDBException::class);
         $this->aclCollection
+            ->expects($this->once())
             ->method('updateOne')
             ->willThrowException($e);
 
         $this->expectExceptionObject(new DatabaseException('Unable to delete access rule', 500, $e));
-        $this->adapter->deleteAccessRule('pub', 'ruleId');
+        $this->adapter->deleteAccessRule('pub', '67f61fb747dec72627014d20');
     }
 
     public function testThrowsExceptionWhenUnableToAddResourceGroup(): void
     {
         $e = $this->createMock(MongoDBException::class);
         $this->aclGroupCollection
+            ->expects($this->once())
             ->method('insertOne')
             ->willThrowException($e);
 
@@ -105,6 +117,7 @@ class MongoDBTest extends TestCase
     {
         $e = $this->createMock(MongoDBException::class);
         $this->aclGroupCollection
+            ->expects($this->once())
             ->method('updateOne')
             ->willThrowException($e);
 
@@ -116,6 +129,7 @@ class MongoDBTest extends TestCase
     {
         $e = $this->createMock(MongoDBException::class);
         $this->aclGroupCollection
+            ->expects($this->once())
             ->method('deleteOne')
             ->willThrowException($e);
 

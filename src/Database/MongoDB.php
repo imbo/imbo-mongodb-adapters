@@ -1,84 +1,71 @@
 <?php declare(strict_types=1);
 namespace Imbo\Database;
 
-use ArrayObject;
 use DateTime;
 use Imbo\Exception\DatabaseException;
 use Imbo\Exception\DuplicateImageIdentifierException;
+use Imbo\Exception\InvalidArgumentException;
 use Imbo\Helpers\BSONToArray;
 use Imbo\Model\Image;
 use Imbo\Model\Images;
 use Imbo\Resource\Images\Query;
+use MongoDB\BSON\ObjectId as MongoId;
 use MongoDB\Client;
 use MongoDB\Collection;
-use MongoDB\Driver\Command;
-use MongoDB\Driver\Cursor;
+use MongoDB\Database;
+use MongoDB\Driver\Exception\BulkWriteException;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
-use MongoDB\Driver\Exception\WriteException;
+use MongoDB\Model\BSONArray;
 use MongoDB\Model\BSONDocument;
 
 /**
- * MongoDB database driver for Imbo
+ * @phpstan-type ImageData array{
+ *     _id:MongoId,
+ *     size:int,
+ *     width:int,
+ *     height:int,
+ *     metadata:BSONArray|BSONDocument,
+ *     added:int,
+ *     updated:int,
+ *     extension:string,
+ *     mime:string
+ * }
  */
 class MongoDB implements DatabaseInterface
 {
-    private Client $client;
-    private string $databaseName;
+    public const IMAGE_COLLECTION_NAME      = 'image';
+    public const SHORT_URLS_COLLECTION_NAME = 'shortUrl';
+
+    private Database $database;
     private Collection $imageCollection;
     private Collection $shortUrlCollection;
-    private BSONToArray $bsonToArray;
-
-    public const IMAGE_COLLECTION      = 'image';
-    public const SHORT_URLS_COLLECTION = 'shortUrl';
 
     /**
-     * Class constructor
+     * Create a new MongoDB database adapter
      *
-     * @param string $databaseName Name of the database to use
-     * @param string $uri URI to connect to
-     * @param array<string, mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
-     * @param array<string, mixed> $driverOptions Additional options for the MongoDB\Client instance
-     * @param Client $client Pre-configured client
-     * @param Collection $imageCollection Pre-configured Collection instance for the images
-     * @param Collection $shortUrlCollection Pre-configured Collection instance for the short URLs
-     * @param BSONToArray $bsonToArray Helper to recursively convert documents to arrays
+     * @param string $databaseName The name of the database to use
+     * @param string $uri The URI to use when connecting to MongoDB
+     * @param array<mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
+     * @param array<mixed> $driverOptions Additional options for the MongoDB\Client instance
+     * @param ?Client $client Pre-configured MongoDB client. When specified $uri, $uriOptions and $driverOptions are ignored
      * @throws DatabaseException
-     *
-     * @see https://docs.mongodb.com/php-library/v1.6/reference/method/MongoDBClient__construct/
      */
     public function __construct(
-        string $databaseName           = 'imbo',
-        string $uri                    = 'mongodb://localhost:27017',
-        array $uriOptions              = [],
-        array $driverOptions           = [],
-        Client $client                 = null,
-        Collection $imageCollection    = null,
-        Collection $shortUrlCollection = null,
-        BSONToArray $bsonToArray       = null
+        private string $databaseName = 'imbo',
+        string $uri                  = 'mongodb://localhost:27017',
+        array $uriOptions            = [],
+        array $driverOptions         = [],
+        ?Client $client              = null,
     ) {
-        $this->databaseName = $databaseName;
-
         try {
-            $this->client = $client ?: new Client(
-                $uri,
-                $uriOptions,
-                $driverOptions,
-            );
+            $client = $client ?: new Client($uri, $uriOptions, $driverOptions);
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to connect to the database', 500, $e);
         }
 
-        $this->imageCollection = $imageCollection ?: $this->client->selectCollection(
-            $this->databaseName,
-            self::IMAGE_COLLECTION,
-        );
-
-        $this->shortUrlCollection = $shortUrlCollection ?: $this->client->selectCollection(
-            $this->databaseName,
-            self::SHORT_URLS_COLLECTION,
-        );
-
-        $this->bsonToArray = $bsonToArray ?: new BSONToArray();
+        $this->database = $client->selectDatabase($this->databaseName);
+        $this->imageCollection = $this->database->selectCollection(self::IMAGE_COLLECTION_NAME);
+        $this->shortUrlCollection = $this->database->selectCollection(self::SHORT_URLS_COLLECTION_NAME);
     }
 
     public function insertImage(string $user, string $imageIdentifier, Image $image, bool $updateIfDuplicate = true): bool
@@ -125,7 +112,7 @@ class MongoDB implements DatabaseInterface
 
         try {
             $this->imageCollection->insertOne($data);
-        } catch (WriteException $e) {
+        } catch (BulkWriteException $e) {
             if (11000 === $e->getCode()) {
                 throw new DuplicateImageIdentifierException(
                     'Duplicate image identifier when attempting to insert image into DB.',
@@ -184,15 +171,10 @@ class MongoDB implements DatabaseInterface
 
     public function getMetadata(string $user, string $imageIdentifier): array
     {
-        /** @var ?ArrayObject */
-        $metadata = $this->getImageData($user, $imageIdentifier)['metadata'] ?? null;
+        $metadata = $this->getImageData($user, $imageIdentifier)['metadata'];
 
-        if (!$metadata instanceof ArrayObject) {
-            throw new DatabaseException('Incorrect metadata for image', 500);
-        }
-
-        /** @var array<string, mixed> */
-        return $this->bsonToArray->toArray($metadata->getArrayCopy());
+        /** @var array<string,mixed> */
+        return (new BSONToArray())->toArray($metadata);
     }
 
     public function deleteMetadata(string $user, string $imageIdentifier): bool
@@ -275,7 +257,8 @@ class MongoDB implements DatabaseInterface
             'size',
             'width',
             'height',
-        ], true);
+        ], 1);
+        $fields['_id'] = 0;
 
         $sort = ['added' => -1];
 
@@ -292,7 +275,7 @@ class MongoDB implements DatabaseInterface
         }
 
         if ($query->getReturnMetadata()) {
-            $fields['metadata'] = true;
+            $fields['metadata'] = 1;
         }
 
         try {
@@ -311,7 +294,7 @@ class MongoDB implements DatabaseInterface
                 $options['skip'] = $skip;
             }
 
-            /** @var BSONDocument[] */
+            /** @var iterable<array{added:int,updated:int}> */
             $result = $this->imageCollection->find($queryData, $options);
             $model->setHits($this->imageCollection->countDocuments($queryData));
         } catch (MongoDBException $e) {
@@ -319,11 +302,9 @@ class MongoDB implements DatabaseInterface
         }
 
         foreach ($result as $image) {
-            unset($image['_id']);
-            $image['added']   = new DateTime('@' . (int) $image['added']);
-            $image['updated'] = new DateTime('@' . (int) $image['updated']);
-
-            $images[] = $this->bsonToArray->toArray($image->getArrayCopy());
+            $image['added']   = new DateTime('@' . $image['added']);
+            $image['updated'] = new DateTime('@' . $image['updated']);
+            $images[] = (new BSONToArray())->toArray($image);
         }
 
         return $images;
@@ -331,20 +312,17 @@ class MongoDB implements DatabaseInterface
 
     public function getImageProperties(string $user, string $imageIdentifier): array
     {
-        $data = $this->getImageData($user, $imageIdentifier, [
-            'size',
-            'width',
-            'height',
-            'mime',
-            'extension',
-            'added',
-            'updated',
-        ], [
-            '_id',
-        ]);
+        $data = $this->getImageData($user, $imageIdentifier);
 
-        /** @var array{size: int, width: int, height: int, mime: string, extension: string, added: int, updated: int} */
-        return $data->getArrayCopy();
+        return [
+            'size'      => $data['size'],
+            'width'     => $data['width'],
+            'height'    => $data['height'],
+            'mime'      => $data['mime'],
+            'extension' => $data['extension'],
+            'added'     => $data['added'],
+            'updated'   => $data['updated'],
+        ];
     }
 
     public function load(string $user, string $imageIdentifier, Image $image): bool
@@ -352,18 +330,18 @@ class MongoDB implements DatabaseInterface
         $data = $this->getImageData($user, $imageIdentifier);
 
         $image
-            ->setWidth((int) $data['width'])
-            ->setHeight((int) $data['height'])
-            ->setFilesize((int) $data['size'])
-            ->setMimeType((string) $data['mime'])
-            ->setExtension((string) $data['extension'])
-            ->setAddedDate(new DateTime('@' . (int) $data['added']))
-            ->setUpdatedDate(new DateTime('@' . (int) $data['updated']));
+            ->setWidth($data['width'])
+            ->setHeight($data['height'])
+            ->setFilesize($data['size'])
+            ->setMimeType($data['mime'])
+            ->setExtension($data['extension'])
+            ->setAddedDate(new DateTime('@' . $data['added']))
+            ->setUpdatedDate(new DateTime('@' . $data['updated']));
 
         return true;
     }
 
-    public function getLastModified(array $users, string $imageIdentifier = null): DateTime
+    public function getLastModified(array $users, ?string $imageIdentifier = null): DateTime
     {
         $query = [];
 
@@ -376,26 +354,26 @@ class MongoDB implements DatabaseInterface
         }
 
         try {
-            /** @var ?BSONDocument */
-            $data = $this->imageCollection->findOne($query, [
+            /** @var ?array{updated:int} */
+            $document = $this->imageCollection->findOne($query, [
                 'sort' => [
                     'updated' => -1,
                 ],
                 'projection' => [
-                    'updated' => true,
+                    'updated' => 1,
                 ],
             ]);
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to fetch image data', 500, $e);
         }
 
-        if (null === $data && null !== $imageIdentifier) {
+        if (null === $document && null !== $imageIdentifier) {
             throw new DatabaseException('Image not found', 404);
-        } elseif (null === $data) {
-            $data = ['updated' => time()];
         }
 
-        return new DateTime('@' . (int) $data['updated']);
+        $updated = null === $document ? time() : $document['updated'];
+
+        return new DateTime('@' . $updated);
     }
 
     public function setLastModifiedNow(string $user, string $imageIdentifier): DateTime
@@ -425,7 +403,7 @@ class MongoDB implements DatabaseInterface
         return $time;
     }
 
-    public function getNumImages(string $user = null): int
+    public function getNumImages(?string $user = null): int
     {
         $query = [];
 
@@ -442,7 +420,7 @@ class MongoDB implements DatabaseInterface
         return $result;
     }
 
-    public function getNumBytes(string $user = null): int
+    public function getNumBytes(?string $user = null): int
     {
         $pipeline = [];
 
@@ -464,47 +442,44 @@ class MongoDB implements DatabaseInterface
         ];
 
         try {
-            /** @var Cursor */
+            /** @var iterable<array{numBytes:int}> */
             $result = $this->imageCollection->aggregate($pipeline);
-
-            /** @var BSONDocument[] */
-            $docs = $result->toArray();
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to fetch information from the database', 500, $e);
         }
 
-        return array_sum(array_map(function (BSONDocument $doc): int {
-            return (int) $doc['numBytes'];
-        }, $docs));
+        $sum = 0;
+
+        foreach ($result as $document) {
+            $sum += $document['numBytes'];
+        }
+
+        return $sum;
     }
 
     public function getNumUsers(): int
     {
         try {
-            $result = count($this->imageCollection->distinct('user'));
+            return count($this->imageCollection->distinct('user'));
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to fetch information from the database', 500, $e);
         }
-
-        return $result;
     }
 
     public function getStatus(): bool
     {
         try {
-            $result = $this->client
-                ->getManager()
-                ->executeCommand($this->databaseName, new Command(['serverStatus' => 1]));
+            $this->database->command(['ping' => 1]);
         } catch (MongoDBException $e) {
             return false;
         }
 
-        return (bool) $result->getServer()->getInfo()['ok'];
+        return true;
     }
 
     public function getImageMimeType(string $user, string $imageIdentifier): string
     {
-        return (string) $this->getImageData($user, $imageIdentifier)['mime'];
+        return $this->getImageData($user, $imageIdentifier)['mime'];
     }
 
     public function imageExists(string $user, string $imageIdentifier): bool
@@ -522,18 +497,16 @@ class MongoDB implements DatabaseInterface
         return true;
     }
 
-    public function insertShortUrl(string $shortUrlId, string $user, string $imageIdentifier, string $extension = null, array $query = []): bool
+    public function insertShortUrl(string $shortUrlId, string $user, string $imageIdentifier, ?string $extension = null, array $query = []): bool
     {
-        $data = [
-            'shortUrlId'      => $shortUrlId,
-            'user'            => $user,
-            'imageIdentifier' => $imageIdentifier,
-            'extension'       => $extension,
-            'query'           => serialize($query),
-        ];
-
         try {
-            $this->shortUrlCollection->insertOne($data);
+            $this->shortUrlCollection->insertOne([
+                'shortUrlId'      => $shortUrlId,
+                'user'            => $user,
+                'imageIdentifier' => $imageIdentifier,
+                'extension'       => $extension,
+                'query'           => serialize($query),
+            ]);
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to create short URL', 500, $e);
         }
@@ -541,35 +514,30 @@ class MongoDB implements DatabaseInterface
         return true;
     }
 
-    public function getShortUrlId(string $user, string $imageIdentifier, string $extension = null, array $query = []): ?string
+    public function getShortUrlId(string $user, string $imageIdentifier, ?string $extension = null, array $query = []): ?string
     {
         try {
-            /** @var ?BSONDocument */
-            $result = $this->shortUrlCollection->findOne([
+            /** @var ?array{shortUrlId:string} */
+            $document = $this->shortUrlCollection->findOne([
                 'user'            => $user,
                 'imageIdentifier' => $imageIdentifier,
                 'extension'       => $extension,
                 'query'           => serialize($query),
             ], [
-                'shortUrlId' => true,
+                'shortUrlId' => 1,
             ]);
         } catch (MongoDBException $e) {
             return null;
         }
 
-        if (null === $result) {
-            return null;
-        }
-
-        /** @var ?string */
-        return $result['shortUrlId'] ?? null;
+        return $document['shortUrlId'] ?? null;
     }
 
     public function getShortUrlParams(string $shortUrlId): ?array
     {
         try {
-            /** @var ?BSONDocument */
-            $result = $this->shortUrlCollection->findOne([
+            /** @var ?array{user:string,imageIdentifier:string,extension:string,query?:string} */
+            $document = $this->shortUrlCollection->findOne([
                 'shortUrlId' => $shortUrlId,
             ], [
                 '_id' => false,
@@ -578,28 +546,26 @@ class MongoDB implements DatabaseInterface
             return null;
         }
 
-        if (null === $result) {
+        if (null === $document) {
             return null;
         }
 
-        if (empty($result['query'])) {
+        if (empty($document['query'])) {
             throw new DatabaseException('Missing query from result', 500);
         }
 
-        $result['query'] = unserialize((string) $result['query']);
+        /** @var array<string,string|array<string>> */
+        $query = unserialize($document['query']);
 
-        /**
-         * @var array{
-         *  user: string,
-         *  imageIdentifier: string,
-         *  extension: string,
-         *  query: array<string, string|string[]>
-         * }
-        */
-        return $result->getArrayCopy();
+        return [
+            'user'            => $document['user'],
+            'imageIdentifier' => $document['imageIdentifier'],
+            'extension'       => $document['extension'],
+            'query'           => $query,
+        ];
     }
 
-    public function deleteShortUrls(string $user, string $imageIdentifier, string $shortUrlId = null): bool
+    public function deleteShortUrls(string $user, string $imageIdentifier, ?string $shortUrlId = null): bool
     {
         $query = [
             'user'            => $user,
@@ -621,44 +587,88 @@ class MongoDB implements DatabaseInterface
 
     public function getAllUsers(): array
     {
-        /** @var string[] */
+        /** @var array<string> */
         return $this->imageCollection->distinct('user');
     }
 
     /**
      * Get image data
      *
-     * @param string $user
-     * @param string $imageIdentifier
-     * @param string[] $includeKeys Keys to include in the result
-     * @param string[] $excludeKeys Keys to exclude from the result
+     * @return ImageData
      * @throws DatabaseException
-     * @return BSONDocument
      */
-    private function getImageData(string $user, string $imageIdentifier, array $includeKeys = [], array $excludeKeys = []): BSONDocument
+    private function getImageData(string $user, string $imageIdentifier): array
     {
         try {
-            $image = $this->imageCollection->findOne(
-                [
-                    'user'            => $user,
-                    'imageIdentifier' => $imageIdentifier,
-                ],
-                [
-                    'projection' => array_merge(
-                        array_fill_keys($includeKeys, true),
-                        array_fill_keys($excludeKeys, false),
-                    ),
-                ],
-            );
+            $image = $this->imageCollection->findOne([
+                'user'            => $user,
+                'imageIdentifier' => $imageIdentifier,
+            ]);
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to find image data', 500, $e);
         }
 
-        if (null === $image) {
+        if (null === $image || !$image instanceof BSONDocument) {
             throw new DatabaseException('Image not found', 404);
         }
 
-        /** @var BSONDocument */
-        return $image;
+        return $this->toImageData($image);
+    }
+
+    /**
+     * Convert a BSONDocument to a known associative array
+     *
+     * @throws InvalidArgumentException
+     * @return ImageData
+     */
+    private function toImageData(BSONDocument $document): array
+    {
+        if (!$document['_id'] instanceof MongoId) {
+            throw new InvalidArgumentException(sprintf('Expected "_id" to be an instance of %s.', MongoId::class));
+        }
+
+        if (!is_int($document['size'])) {
+            throw new InvalidArgumentException('Expected "size" to be an integer.');
+        }
+
+        if (!is_int($document['width'])) {
+            throw new InvalidArgumentException('Expected "width" to be an integer.');
+        }
+
+        if (!is_int($document['height'])) {
+            throw new InvalidArgumentException('Expected "height" to be an integer.');
+        }
+
+        if (!is_int($document['added'])) {
+            throw new InvalidArgumentException('Expected "added" to be an integer.');
+        }
+
+        if (!is_int($document['updated'])) {
+            throw new InvalidArgumentException('Expected "updated" to be an integer.');
+        }
+
+        if (!$document['metadata'] instanceof BSONArray && !$document['metadata'] instanceof BSONDocument) {
+            throw new InvalidArgumentException(sprintf('Expected "metadata" to be an instance of %s or %s.', BSONArray::class, BSONDocument::class));
+        }
+
+        if (!is_string($document['mime'])) {
+            throw new InvalidArgumentException('Expected "mime" to be a string.');
+        }
+
+        if (!is_string($document['extension'])) {
+            throw new InvalidArgumentException('Expected "extension" to be a string.');
+        }
+
+        return [
+            '_id'       => $document['_id'],
+            'size'      => $document['size'],
+            'width'     => $document['width'],
+            'height'    => $document['height'],
+            'metadata'  => $document['metadata'],
+            'mime'      => $document['mime'],
+            'extension' => $document['extension'],
+            'added'     => $document['added'],
+            'updated'   => $document['updated'],
+        ];
     }
 }

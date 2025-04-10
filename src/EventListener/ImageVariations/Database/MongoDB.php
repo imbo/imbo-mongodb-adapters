@@ -5,49 +5,43 @@ use Imbo\Exception\DatabaseException;
 use MongoDB\Client;
 use MongoDB\Collection;
 use MongoDB\Driver\Exception\Exception as MongoDBException;
-use MongoDB\Model\BSONDocument;
 
-/**
- * MongoDB database driver for the image variations
- */
 class MongoDB implements DatabaseInterface
 {
-    private string $databaseName;
-    private Client $client;
+    public const IMAGE_VARIATION_COLLECTION_NAME = 'imagevariation';
+
     private Collection $collection;
 
-    public const IMAGE_VARIATION_COLLECTION = 'imagevariation';
-
     /**
-     * Class constructor
+     * Create a new MongoDB database adapter
+     *
+     * @param string $databaseName The name of the database to use
+     * @param string $uri The URI to use when connecting to MongoDB
+     * @param array<mixed> $uriOptions Options for the URI, sent to the MongoDB\Client instance
+     * @param array<mixed> $driverOptions Additional options for the MongoDB\Client instance
+     * @param ?Client $client Pre-configured MongoDB client. When specified $uri, $uriOptions and $driverOptions are ignored
+     * @throws DatabaseException
      */
     public function __construct(
         string $databaseName = 'imbo',
-        string $uri = 'mongodb://localhost:27017',
-        array $uriOptions = [],
+        string $uri          = 'mongodb://localhost:27017',
+        array $uriOptions    = [],
         array $driverOptions = [],
-        Client $client = null,
-        Collection $collection = null
+        ?Client $client      = null,
     ) {
-        $this->databaseName = $databaseName;
-
         try {
-            $this->client = $client ?: new Client(
-                $uri,
-                $uriOptions,
-                $driverOptions,
-            );
+            $client = $client ?: new Client($uri, $uriOptions, $driverOptions);
         } catch (MongoDBException $e) {
             throw new DatabaseException('Unable to connect to the database', 500, $e);
         }
 
-        $this->collection = $collection ?: $this->client->selectCollection(
-            $this->databaseName,
-            self::IMAGE_VARIATION_COLLECTION,
+        $this->collection = $client->selectCollection(
+            $databaseName,
+            self::IMAGE_VARIATION_COLLECTION_NAME,
         );
     }
 
-    public function storeImageVariationMetadata(string $user, string $imageIdentifier, int $width, int $height): bool
+    public function storeImageVariationMetadata(string $user, string $imageIdentifier, int $width, int $height): true
     {
         try {
             $this->collection->insertOne([
@@ -74,35 +68,32 @@ class MongoDB implements DatabaseInterface
             ],
         ];
 
-        /** @var ?BSONDocument */
-        $result = $this->collection
-            ->findOne($query, [
-                'projection' => [
-                    '_id' => false,
-                    'width' => true,
-                    'height' => true,
-                ],
-                'sort' => [
-                    'width' => 1,
-                ],
-            ]);
+        /** @var ?array{width:int,height:int} */
+        $document = $this->collection->findOne($query, [
+            'projection' => [
+                '_id'    => 0,
+                'width'  => 1,
+                'height' => 1,
+            ],
+            'sort' => [
+                'width' => 1,
+            ],
+        ]);
 
-        if (null === $result) {
-            return null;
-        }
-
-        /** @var array{width:int,height:int} */
-        return $result->getArrayCopy();
+        return null === $document ? null : [
+            'width' => $document['width'],
+            'height' => $document['height'],
+        ];
     }
 
-    public function deleteImageVariations(string $user, string $imageIdentifier, int $width = null): bool
+    public function deleteImageVariations(string $user, string $imageIdentifier, ?int $width = null): bool
     {
         $query = [
             'user' => $user,
             'imageIdentifier' => $imageIdentifier,
         ];
 
-        if ($width !== null) {
+        if (null !== $width) {
             $query['width'] = $width;
         }
 

@@ -18,14 +18,19 @@ class MongoDBTest extends TestCase
     protected function setUp(): void
     {
         $this->collection = $this->createMock(Collection::class);
+        $client = $this->createMock(Client::class);
+        $client
+            ->expects($this->once())
+            ->method('selectCollection')
+            ->with('imbo', MongoDB::IMAGE_VARIATION_COLLECTION_NAME)
+            ->willReturn($this->collection);
 
         $this->adapter = new MongoDB(
             'imbo',
             'mongodb://localhost:27017',
             [],
             [],
-            $this->createMock(Client::class),
-            $this->collection,
+            $client,
         );
     }
 

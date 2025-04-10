@@ -11,7 +11,6 @@ use MongoDB\GridFS\Exception\FileNotFoundException;
 use MongoDB\Model\BSONDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(GridFS::class)]
@@ -30,7 +29,6 @@ class GridFSTest extends TestCase
     {
         $bucketOptions = ['some' => 'option'];
 
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -38,16 +36,15 @@ class GridFSTest extends TestCase
             ->with(
                 'user.image-id.100',
                 $this->isResource(),
-                $this->callback(function (array $data): bool {
-                    return
+                $this->callback(
+                    fn (array $data): bool =>
                         is_int($data['metadata']['added'] ?? null) &&
                         $this->user === ($data['metadata']['user'] ?? null) &&
                         $this->imageId === ($data['metadata']['imageIdentifier'] ?? null) &&
-                        100 === ($data['metadata']['width'] ?? null);
-                }),
+                        100 === ($data['metadata']['width'] ?? null),
+                ),
             );
 
-        /** @var Database&MockObject */
         $database = $this->createMock(Database::class);
         $database
             ->expects($this->once())
@@ -55,7 +52,6 @@ class GridFSTest extends TestCase
             ->with($bucketOptions)
             ->willReturn($bucket);
 
-        /** @var Client&MockObject */
         $client = $this->createMock(Client::class);
         $client
             ->expects($this->once())
@@ -63,12 +59,8 @@ class GridFSTest extends TestCase
             ->with('database-name')
             ->willReturn($database);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], $bucketOptions, $client);
-
-        $this->assertTrue(
-            $adapter->storeImageVariation($this->user, $this->imageId, 'image data', 100),
-            'Expected adapter to store image variation',
-        );
+        $adapter = new GridFS('database-name', bucketOptions: $bucketOptions, client: $client);
+        $adapter->storeImageVariation($this->user, $this->imageId, 'image data', 100);
     }
 
     public function testCanGetImageVariation(): void
@@ -82,7 +74,6 @@ class GridFSTest extends TestCase
         fwrite($stream, 'image data');
         rewind($stream);
 
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -96,7 +87,7 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
+        $adapter = new GridFS('database-name', client: $client);
         $this->assertSame(
             'image data',
             $adapter->getImageVariation($this->user, $this->imageId, 100),
@@ -106,7 +97,6 @@ class GridFSTest extends TestCase
     #[DataProvider('getGetImageExceptions')]
     public function testGetImageVariationThrowsExceptionWhenErrorOccurs(MongoDBException $mongoDbException, StorageException $storageException): void
     {
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -119,14 +109,13 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
+        $adapter = new GridFS('database-name', client: $client);
         $this->expectExceptionObject($storageException);
         $adapter->getImageVariation($this->user, $this->imageId, 100);
     }
 
     public function testCanDeleteImageVariations(): void
     {
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -144,7 +133,6 @@ class GridFSTest extends TestCase
             ->expects($this->exactly(2))
             ->method('delete')
             ->with($this->callback(function ($foo) {
-                /** @var int */
                 static $i = 0;
                 return match ([$i++, $foo]) {
                     [0, 'id1'],
@@ -159,17 +147,12 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
-
-        $this->assertTrue(
-            $adapter->deleteImageVariations($this->user, $this->imageId),
-            'Expected adapter to delete image variations',
-        );
+        $adapter = new GridFS('database-name', client: $client);
+        $adapter->deleteImageVariations($this->user, $this->imageId);
     }
 
     public function testCanDeleteSpecificImageVariation(): void
     {
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -192,17 +175,12 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
-
-        $this->assertTrue(
-            $adapter->deleteImageVariations($this->user, $this->imageId, 100),
-            'Expected adapter to delete specific image variation',
-        );
+        $adapter = new GridFS('database-name', client: $client);
+        $adapter->deleteImageVariations($this->user, $this->imageId, 100);
     }
 
     public function testDeleteThrowsExceptionWhenFileDoesNotExist(): void
     {
-        /** @var Bucket&MockObject */
         $bucket = $this->createMock(Bucket::class);
         $bucket
             ->expects($this->once())
@@ -225,7 +203,7 @@ class GridFSTest extends TestCase
             ]),
         ]);
 
-        $adapter = new GridFS('database-name', 'uri', [], [], [], $client);
+        $adapter = new GridFS('database-name', client: $client);
 
         $this->expectExceptionObject(new StorageException('Unable to delete image variations', 500));
         $adapter->deleteImageVariations($this->user, $this->imageId);
