@@ -299,9 +299,9 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
             }
 
             $rules[] = [
-                'id'        => (string) $rule['id'],
                 'resources' => $resources,
                 'users'     => $users,
+                'id'        => (string) $rule['id'],
             ];
         }
 
