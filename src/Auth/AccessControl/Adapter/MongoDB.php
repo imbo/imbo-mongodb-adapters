@@ -279,28 +279,29 @@ class MongoDB extends AbstractAdapter implements MutableAdapterInterface
         $rules = [];
 
         foreach ($acls as $rule) {
-            if (!$rule['resources'] instanceof BSONArray) {
-                continue;
-            }
-
-            if (!$rule['users'] instanceof BSONArray) {
-                continue;
-            }
-
             if (!$rule['id'] instanceof MongoId) {
                 continue;
             }
 
-            /** @var array<string> */
-            $resources = $rule['resources']->getArrayCopy();
+            $resources = [];
+            $users = [];
 
-            /** @var array<string> */
-            $users = $rule['users']->getArrayCopy();
+            if (($rule['resources'] ?? null) instanceof BSONArray) {
+                /** @var array<string> */
+                $resources = $rule['resources']->getArrayCopy();
+            }
+
+            if (($rule['users'] ?? null) instanceof BSONArray) {
+                /** @var array<string> */
+                $users = $rule['users']->getArrayCopy();
+            } elseif ('*' === ($rule['users'] ?? '')) {
+                $users = '*';
+            }
 
             $rules[] = [
+                'id'        => (string) $rule['id'],
                 'resources' => $resources,
                 'users'     => $users,
-                'id'        => (string) $rule['id'],
             ];
         }
 
