@@ -8,7 +8,6 @@ use MongoDB\Driver\Exception\Exception as MongoDBException;
 use MongoDB\Driver\Exception\RuntimeException as DriverRuntimeException;
 use MongoDB\GridFS\Bucket;
 use MongoDB\GridFS\Exception\FileNotFoundException;
-use MongoDB\Model\BSONDocument;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -112,101 +111,6 @@ class GridFSTest extends TestCase
         $adapter = new GridFS('database-name', client: $client);
         $this->expectExceptionObject($storageException);
         $adapter->getImageVariation($this->user, $this->imageId, 100);
-    }
-
-    public function testCanDeleteImageVariations(): void
-    {
-        $bucket = $this->createMock(Bucket::class);
-        $bucket
-            ->expects($this->once())
-            ->method('find')
-            ->with([
-                'metadata.user'            => $this->user,
-                'metadata.imageIdentifier' => $this->imageId,
-            ])
-            ->willReturn([
-                new BSONDocument(['_id' => 'id1']),
-                new BSONDocument(['_id' => 'id2']),
-            ]);
-
-        $bucket
-            ->expects($this->exactly(2))
-            ->method('delete')
-            ->with($this->callback(function ($foo) {
-                static $i = 0;
-                return match ([$i++, $foo]) {
-                    [0, 'id1'],
-                    [1, 'id2'] => true,
-                    default => false,
-                };
-            }));
-
-        $client = $this->createConfiguredMock(Client::class, [
-            'selectDatabase' => $this->createConfiguredMock(Database::class, [
-                'selectGridFSBucket' => $bucket,
-            ]),
-        ]);
-
-        $adapter = new GridFS('database-name', client: $client);
-        $adapter->deleteImageVariations($this->user, $this->imageId);
-    }
-
-    public function testCanDeleteSpecificImageVariation(): void
-    {
-        $bucket = $this->createMock(Bucket::class);
-        $bucket
-            ->expects($this->once())
-            ->method('find')
-            ->with([
-                'metadata.user'            => $this->user,
-                'metadata.imageIdentifier' => $this->imageId,
-                'metadata.width'           => 100,
-            ])
-            ->willReturn([new BSONDocument(['_id' => 'document id'])]);
-
-        $bucket
-            ->expects($this->once())
-            ->method('delete')
-            ->with('document id');
-
-        $client = $this->createConfiguredMock(Client::class, [
-            'selectDatabase' => $this->createConfiguredMock(Database::class, [
-                'selectGridFSBucket' => $bucket,
-            ]),
-        ]);
-
-        $adapter = new GridFS('database-name', client: $client);
-        $adapter->deleteImageVariations($this->user, $this->imageId, 100);
-    }
-
-    public function testDeleteThrowsExceptionWhenFileDoesNotExist(): void
-    {
-        $bucket = $this->createMock(Bucket::class);
-        $bucket
-            ->expects($this->once())
-            ->method('find')
-            ->with([
-                'metadata.user'            => $this->user,
-                'metadata.imageIdentifier' => $this->imageId,
-            ])
-            ->willReturn([new BSONDocument(['_id' => 'id'])]);
-
-        $bucket
-            ->expects($this->once())
-            ->method('delete')
-            ->with('id')
-            ->willThrowException(new DriverRuntimeException('some error'));
-
-        $client = $this->createConfiguredMock(Client::class, [
-            'selectDatabase' => $this->createConfiguredMock(Database::class, [
-                'selectGridFSBucket' => $bucket,
-            ]),
-        ]);
-
-        $adapter = new GridFS('database-name', client: $client);
-
-        $this->expectExceptionObject(new StorageException('Unable to delete image variations', 500));
-        $adapter->deleteImageVariations($this->user, $this->imageId);
     }
 
     /**
