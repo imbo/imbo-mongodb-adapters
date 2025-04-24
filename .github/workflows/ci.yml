@@ -24,7 +24,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: imagick, mongodb-1.21.0
+          extensions: imagick
 
       - name: PHP version
         run: php -v
